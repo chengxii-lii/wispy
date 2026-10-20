@@ -21,6 +21,9 @@
 :root{
   --ink:#0f2347;
   --ink-2:rgba(15,35,71,.78);
+  --sky-text:#fff;
+  --sky-text-2:rgba(255,255,255,.9);
+  --sky-shadow:0 1px 2px rgba(10,50,140,.22),0 2px 28px rgba(10,60,160,.32);
   --bg:#8fbcf5;
   --cobalt:#0047ab;
   --glass:rgba(255,255,255,.58);
@@ -38,7 +41,7 @@ html:not(.lenis){scroll-behavior:smooth}
 html.lenis,html.lenis body{height:auto}
 .lenis.lenis-smooth{scroll-behavior:auto!important}
 .lenis.lenis-stopped{overflow:hidden}
-body{margin:0;background:var(--bg);color:var(--ink);font:400 1.0625rem/1.5 var(--sans);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+body{margin:0;background:var(--bg);color:var(--sky-text);font:400 1.0625rem/1.5 var(--sans);-webkit-font-smoothing:antialiased;overflow-x:hidden}
 #sky{position:fixed;inset:0;width:100%;height:100%;z-index:-1;display:block}
 a{color:inherit}
 img{display:block;max-width:100%}
@@ -52,32 +55,35 @@ img{display:block;max-width:100%}
 /* hero */
 .hero{min-height:100svh;display:flex;align-items:center;justify-content:center;text-align:center;padding:64px 24px 128px}
 .hero-in{display:flex;flex-direction:column;align-items:center;will-change:transform,opacity}
-.mark{margin:0;font-weight:600;font-size:clamp(5.5rem,19vw,12rem);line-height:.95;letter-spacing:-.065em;text-shadow:0 8px 56px rgba(255,255,255,.6);display:flex}
+.mark{margin:0;font-weight:600;font-size:clamp(5.5rem,19vw,12rem);line-height:.95;letter-spacing:-.065em;text-shadow:0 2px 4px rgba(10,50,140,.18),0 10px 70px rgba(10,60,160,.4);display:flex}
 .mark span{display:inline-block;transition:transform .6s var(--ease)}
 .mark span:hover{transform:translateY(-.07em)}
 .js .mark span{opacity:0;transform:translateY(.5em);animation:rise 1s var(--ease) forwards;animation-delay:calc(.08s * var(--i))}
 .js .mark span:hover{transform:translateY(-.07em)}
 @keyframes rise{to{opacity:1;transform:none}}
 .tag{margin:16px 0 0;font-size:clamp(1.5rem,3.4vw,2.25rem);font-weight:400;letter-spacing:-.025em;line-height:1.2;text-wrap:balance}
-.sub{margin:16px 0 0;max-width:40ch;color:var(--ink-2);text-wrap:balance}
+.sub{margin:16px 0 0;max-width:40ch;color:var(--sky-text-2);text-wrap:balance}
 .cta{margin-top:40px;display:flex;flex-direction:column;align-items:center;gap:14px}
 .btn{display:inline-flex;align-items:center;gap:10px;height:56px;padding:0 32px;border-radius:99px;background:var(--ink);color:#fff;font:600 1rem/1 var(--sans);text-decoration:none;box-shadow:0 12px 32px rgba(15,35,71,.28);transition:transform .2s var(--ease),box-shadow .2s var(--ease)}
 .btn svg{width:18px;height:18px}
 .btn:hover{transform:scale(1.04);box-shadow:0 18px 44px rgba(15,35,71,.34)}
 .btn:active{transform:scale(.97)}
 .btn:focus-visible{outline-offset:4px;border-radius:99px}
-.meta{margin:0;font-size:.9375rem;color:var(--ink-2);min-height:1.5em;text-wrap:balance}
+.meta{margin:0;font-size:.9375rem;color:var(--sky-text-2);min-height:1.5em;text-wrap:balance}
 .meta a{text-underline-offset:3px}
+
+main{text-shadow:var(--sky-shadow)}
+.btn,.frame{text-shadow:none}
 
 /* sections */
 section{padding:112px 0}
 h2{margin:0;font-size:clamp(2.25rem,5.4vw,4rem);font-weight:600;letter-spacing:-.045em;line-height:1.04;text-wrap:balance;max-width:14ch}
-.lead{margin:20px 0 0;max-width:46ch;color:var(--ink-2);text-wrap:pretty}
+.lead{margin:20px 0 0;max-width:46ch;color:var(--sky-text-2);text-wrap:pretty}
 .frame{margin-top:56px;padding:8px;border-radius:28px;background:var(--glass);border:1px solid var(--glass-line);box-shadow:var(--shadow);backdrop-filter:blur(24px) saturate(1.2);-webkit-backdrop-filter:blur(24px) saturate(1.2);transform:perspective(1400px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));will-change:transform}
 .frame img{border-radius:20px;width:100%;height:auto;aspect-ratio:960/540;background:rgba(255,255,255,.3)}
 .trio{margin:48px 0 0;padding:0;list-style:none;display:grid;grid-template-columns:repeat(3,1fr);gap:32px}
 .trio li{font-size:1.1875rem;font-weight:500;letter-spacing:-.02em;line-height:1.3;text-wrap:balance}
-.trio li span{display:block;margin-top:6px;font-size:1rem;font-weight:400;letter-spacing:0;color:var(--ink-2)}
+.trio li span{display:block;margin-top:6px;font-size:1rem;font-weight:400;letter-spacing:0;color:var(--sky-text-2)}
 .final{margin-top:40px;display:flex;flex-direction:column;align-items:flex-start;gap:14px}
 
 /* footer: cobalt, made by chengxi */
@@ -96,12 +102,14 @@ footer :focus-visible{outline-color:#fff}
 .base .sp{margin-right:auto}
 .base time{font-variant-numeric:tabular-nums}
 
-/* cursor halo (mouse only) */
-.halo{position:fixed;left:0;top:0;z-index:20;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;border:1.5px solid rgba(15,35,71,.5);background:rgba(255,255,255,.14);pointer-events:none;opacity:0;transition:opacity .3s var(--ease),border-color .3s var(--ease),background-color .3s var(--ease),width .3s var(--ease),height .3s var(--ease),margin .3s var(--ease)}
-.halo.show{opacity:1}
-.halo.big{width:72px;height:72px;margin:-36px 0 0 -36px;background:rgba(255,255,255,.22)}
-.halo.dark{border-color:rgba(255,255,255,.75);background:rgba(255,255,255,.06)}
-@media (hover:none),(pointer:coarse){.halo{display:none}}
+/* cursor: a macOS arrow that trails the real pointer a little (mouse only) */
+.cur{position:fixed;left:0;top:0;z-index:30;width:23px;height:32px;margin:-2px 0 0 -3px;pointer-events:none;opacity:0;transform-origin:3px 2px;transition:opacity .25s var(--ease);filter:drop-shadow(0 2px 3px rgba(0,30,90,.3));will-change:transform}
+.cur.show{opacity:1}
+.cur svg{display:block;width:100%;height:100%;transform-origin:3px 2px;transition:transform .25s var(--ease)}
+.cur.big svg{transform:scale(1.18)}
+.cur.down svg{transform:scale(.9)}
+@media (hover:hover) and (pointer:fine){html.cur-on,html.cur-on *{cursor:none!important}}
+@media (hover:none),(pointer:coarse){.cur{display:none}}
 
 /* the dock: this page's nav is wispy */
 #bar{position:fixed;left:0;right:0;bottom:0;z-index:10;display:flex;justify-content:center;pointer-events:none;padding-bottom:max(14px,env(safe-area-inset-bottom))}
@@ -121,7 +129,7 @@ body.dark-zone .pill{background:#fff;opacity:.65}
 .di.get svg{stroke:#fff}
 .di:focus-visible{outline:none}
 .di:focus-visible .tile{outline:2px solid var(--ink);outline-offset:3px}
-.di .lbl{position:absolute;bottom:calc(100% + 10px);left:50%;transform:translate(-50%,4px);padding:6px 12px;border-radius:12px;background:var(--glass);border:1px solid var(--glass-line);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);font-size:.8125rem;font-weight:500;line-height:1.2;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .14s var(--ease),transform .14s var(--ease)}
+.di .lbl{color:var(--ink);text-shadow:none;position:absolute;bottom:calc(100% + 10px);left:50%;transform:translate(-50%,4px);padding:6px 12px;border-radius:12px;background:var(--glass);border:1px solid var(--glass-line);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);font-size:.8125rem;font-weight:500;line-height:1.2;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .14s var(--ease),transform .14s var(--ease)}
 .di:hover .lbl,.di:focus-visible .lbl{opacity:1;transform:translate(-50%,0)}
 .di .dot{position:absolute;left:50%;bottom:-7px;width:5px;height:5px;margin-left:-2.5px;border-radius:50%;background:var(--ink);opacity:0;transform:scale(.5);transition:opacity .2s var(--ease),transform .2s var(--ease)}
 .di.on .dot{opacity:.55;transform:none}
@@ -154,7 +162,7 @@ body.dark-zone .pill{background:#fff;opacity:.65}
 </head>
 <body>
 <canvas id="sky" aria-hidden="true"></canvas>
-<div class="halo" id="halo" aria-hidden="true"></div>
+<div class="cur" id="cur" aria-hidden="true"><svg viewBox="0 0 20 28"><path d="M2 1.5v21.2l5.2-5 3.4 8.1 3.7-1.6-3.4-7.9h7.2z" fill="#000" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg></div>
 
 <main>
   <header class="hero" id="top">
@@ -290,14 +298,14 @@ void main(){
   float cl=smoothstep(.36,.74,c);
   cl*=1.-.7*f;
   float shade=clamp((c-d)*5.,0.,1.);
-  vec3 skyTop=vec3(.22,.52,.98);
-  vec3 skyLow=vec3(.70,.86,1.);
+  vec3 skyTop=vec3(.14,.44,.96);
+  vec3 skyLow=vec3(.52,.76,1.);
   vec3 sky=mix(skyLow,skyTop,smoothstep(.0,1.,uv.y));
   float sun=exp(-length((uv-vec2(.84,1.02))*asp)*2.4);
   sky+=vec3(1.,.96,.88)*sun*.32;
-  vec3 lit=vec3(1.);
-  vec3 dim=vec3(.82,.9,1.);
-  vec3 col=mix(sky,mix(lit,dim,shade*.55),cl*.97);
+  vec3 lit=vec3(.95,.975,1.);
+  vec3 dim=vec3(.66,.8,1.);
+  vec3 col=mix(sky,mix(lit,dim,shade*.8),cl*.92);
   col+=vec3(1.,.98,.92)*f*.08;
   gl_FragColor=vec4(col,1.);
 }`;
@@ -339,30 +347,33 @@ void main(){
     };
   })();
 
-  /* ---------- halo, magnets, tilt, hero parallax ---------- */
-  const halo = $('#halo'), heroIn = $('#heroIn'), tilt = $('#tilt'), footer = $('#contact');
+  /* ---------- cursor, magnets, tilt, hero parallax ---------- */
+  const curEl = $('#cur'), heroIn = $('#heroIn'), tilt = $('#tilt'), footer = $('#contact');
   const H = { x: 0, y: 0 }, parX = { v: 0 }, parY = { v: 0 }, T = { rx: 0, ry: 0 };
   const mags = $$('[data-mag]').map(el => ({ el, x: 0, y: 0 }));
   if (canHover) {
-    document.addEventListener('pointerover', e => halo.classList.toggle('big', !!e.target.closest('a,button,[data-mag]')));
+    document.documentElement.classList.add('cur-on');
+    document.addEventListener('pointerover', e => curEl.classList.toggle('big', !!e.target.closest('a,button,[data-mag]')));
+    document.addEventListener('pointerdown', () => curEl.classList.add('down'));
+    document.addEventListener('pointerup', () => curEl.classList.remove('down'));
   }
   const pointerFx = () => {
     const w = innerWidth, hgt = innerHeight;
-    // halo
+    // cursor: eases toward the real pointer, so it glides instead of snapping
     if (canHover && P.active) {
-      H.x = lerp(H.x || P.x, P.x, .22); H.y = lerp(H.y || P.y, P.y, .22);
-      halo.style.transform = `translate3d(${H.x}px,${H.y}px,0)`;
-      halo.classList.add('show');
-      const dark = P.y > footer.getBoundingClientRect().top;
-      halo.classList.toggle('dark', dark);
-    } else halo.classList.remove('show');
+      if (!H.on) { H.x = P.x; H.y = P.y; H.on = true; }
+      H.x = lerp(H.x, P.x, reduce ? 1 : .2); H.y = lerp(H.y, P.y, reduce ? 1 : .2);
+      curEl.style.transform = `translate3d(${H.x.toFixed(2)}px,${H.y.toFixed(2)}px,0)`;
+      curEl.classList.add('show');
+    } else curEl.classList.remove('show');
     document.body.classList.toggle('dark-zone', footer.getBoundingClientRect().top < hgt - 40);
     // magnets: pull toward the pointer when it is near
     if (canHover && !reduce) for (const m of mags) {
       const r = m.el.getBoundingClientRect();
       const cx = r.left + r.width / 2 - m.x, cy = r.top + r.height / 2 - m.y;
-      const dx = P.x - cx, dy = P.y - cy, near = P.active && Math.hypot(dx, dy) < Math.max(r.width, 90) * .8 + 40;
-      m.x = lerp(m.x, near ? dx * .28 : 0, .16); m.y = lerp(m.y, near ? dy * .28 : 0, .16);
+      const dx = P.x - cx, dy = P.y - cy, pad = 10;
+      const near = P.active && P.x > r.left - pad - m.x && P.x < r.right + pad - m.x && P.y > r.top - pad - m.y && P.y < r.bottom + pad - m.y;
+      m.x = lerp(m.x, near ? clamp(dx * .07, -5, 5) : 0, .14); m.y = lerp(m.y, near ? clamp(dy * .1, -4, 4) : 0, .14);
       m.el.style.translate = Math.abs(m.x) + Math.abs(m.y) < .05 ? '' : `${m.x.toFixed(2)}px ${m.y.toFixed(2)}px`;
     }
     // hero: drifts against the pointer, and lifts away as you scroll
