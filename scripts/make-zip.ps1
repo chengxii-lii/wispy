@@ -33,6 +33,10 @@ https://github.com/chengxii-lii/tinybar
 $zip = Join-Path $out "tinybar-v$version-win-x64.zip"
 Compress-Archive -Path (Join-Path $stage '*') -DestinationPath $zip -CompressionLevel Optimal
 Remove-Item $stage -Recurse -Force
-$hash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLower()
+# .NET directly: Get-FileHash isn't always loadable in CI's Windows PowerShell
+$sha = [System.Security.Cryptography.SHA256]::Create()
+$stream = [System.IO.File]::OpenRead($zip)
+$hash = ([BitConverter]::ToString($sha.ComputeHash($stream)) -replace '-', '').ToLower()
+$stream.Close()
 "$hash  $(Split-Path -Leaf $zip)" | Set-Content "$zip.sha256" -Encoding ASCII
 Write-Host ("built {0} ({1} MB)" -f $zip, [math]::Round((Get-Item $zip).Length / 1MB))
