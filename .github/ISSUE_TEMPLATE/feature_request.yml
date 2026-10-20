@@ -1,0 +1,19 @@
+name: Feature request
+description: An idea that would make tinybar better
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: Describe the situation first. The best features come from a real need, not a UI sketch.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like tinybar to do?
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: What do you do today instead?

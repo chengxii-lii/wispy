@@ -1,0 +1,33 @@
+# Every push and pull request: the fast checks, the native helper compiles, and the app packages.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Fast checks
+        run: npm test
+
+      - name: Build the native helper
+        run: npm run helper
+
+      - name: Package the app
+        run: npm run pack

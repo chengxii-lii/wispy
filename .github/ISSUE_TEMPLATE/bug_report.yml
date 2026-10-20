@@ -1,0 +1,40 @@
+name: Bug report
+description: Something doesn't work the way it should
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping. If the Windows taskbar is missing right now, run `restore-taskbar.ps1` first.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what happened instead. A screenshot or short clip helps.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: tinybar version
+      placeholder: "1.0.0"
+    validations:
+      required: true
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version
+      description: "Win+R, type winver. For example: Windows 11 24H2 (build 26100)"
+    validations:
+      required: true
+  - type: dropdown
+    id: displays
+    attributes:
+      label: Displays
+      options: [One, Two or more, Mixed scaling (for example a laptop panel and a monitor)]
+  - type: textarea
+    id: log
+    attributes:
+      label: Log
+      description: "The last lines of %APPDATA%\\tinybar\\tinybar.log, if something crashed."
+      render: text

@@ -1,0 +1,42 @@
+# Push a tag like v1.0.0 and this builds the release zip and opens a DRAFT release with the changelog entry
+# as its notes, so you can read it over and press Publish yourself.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Check the tag matches package.json
+        shell: bash
+        run: |
+          v=$(node -p "require('./package.json').version")
+          if [ "v$v" != "${GITHUB_REF_NAME}" ]; then echo "Tag ${GITHUB_REF_NAME} but package.json says v$v"; exit 1; fi
+
+      - run: npm ci
+      - run: npm test
+      - run: npm run helper
+      - run: npm run pack
+      - run: npm run zip
+
+      - name: Draft the release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          node scripts/release-notes.mjs "${GITHUB_REF_NAME}" > notes.md
+          gh release create "${GITHUB_REF_NAME}" release/*.zip release/*.sha256 \
+            --draft --title "tinybar ${GITHUB_REF_NAME}" --notes-file notes.md
