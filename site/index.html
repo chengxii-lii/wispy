@@ -4,48 +4,40 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>wispy: your taskbar, as a home bar</title>
-<meta name="description" content="wispy replaces the Windows taskbar with a thin pill that rises to meet your cursor, opens into a dock, and holds search, quick settings and notifications. Free and open source.">
-<meta name="theme-color" content="#cfdcec" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#161d3a" media="(prefers-color-scheme: dark)">
+<meta name="description" content="wispy replaces the Windows taskbar with a thin pill that rises to meet your cursor and opens into a dock. Free and open source.">
+<meta name="theme-color" content="#8fbcf5">
 <meta property="og:type" content="website">
 <meta property="og:title" content="wispy: your taskbar, as a home bar">
-<meta property="og:description" content="A thin pill that rises to meet your cursor, opens into a dock, and holds search, quick settings and notifications. Windows 11, free and open source.">
+<meta property="og:description" content="A thin pill that rises to meet your cursor and opens into a dock. Windows 11, free and open source.">
 <meta property="og:image" content="https://chengxii-lii.github.io/wispy/img/social.jpg">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23cfdcec'/%3E%3Crect x='14' y='28' width='36' height='8' rx='4' fill='%231d2838'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%238fbcf5'/%3E%3Crect x='14' y='28' width='36' height='8' rx='4' fill='%230f2347'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<script>document.documentElement.classList.add('js')</script>
 <style>
+@font-face{font-family:"Endless";src:url(fonts/Endless-Regular.ttf) format("truetype");font-display:swap}
 :root{
-  --ink:#1d2838;
-  --ink-2:rgba(29,40,56,.8);
-  --haze:#8fa3ba;
-  --bg:#cfdcec;
-  --glass:rgba(255,255,255,.56);
-  --glass-line:rgba(255,255,255,.8);
-  --tile:rgba(255,255,255,.88);
-  --btn-text:#fff;
-  --glow:rgba(255,255,255,.7);
-  --shadow:0 24px 64px rgba(60,84,120,.24);
+  --ink:#0f2347;
+  --ink-2:rgba(15,35,71,.78);
+  --bg:#8fbcf5;
+  --cobalt:#0047ab;
+  --glass:rgba(255,255,255,.58);
+  --glass-line:rgba(255,255,255,.85);
+  --tile:rgba(255,255,255,.9);
+  --shadow:0 24px 64px rgba(30,80,170,.25);
   --ease:cubic-bezier(.23,1,.32,1);
   --sans:"Geist",system-ui,-apple-system,"Segoe UI",sans-serif;
-}
-@media (prefers-color-scheme:dark){
-  :root{
-    --ink:#eef3fb;
-    --ink-2:rgba(238,243,251,.78);
-    --bg:#161d3a;
-    --glass:rgba(18,26,58,.52);
-    --glass-line:rgba(255,255,255,.15);
-    --tile:rgba(255,255,255,.14);
-    --btn-text:#121a36;
-    --glow:rgba(120,140,220,.35);
-    --shadow:0 24px 64px rgba(2,4,24,.55);
-  }
+  --mono:"Geist Mono",ui-monospace,"Cascadia Mono",monospace;
+  --serif:"Instrument Serif",Georgia,serif;
 }
 *{box-sizing:border-box}
-html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+html{-webkit-text-size-adjust:100%}
+html:not(.lenis){scroll-behavior:smooth}
+html.lenis,html.lenis body{height:auto}
+.lenis.lenis-smooth{scroll-behavior:auto!important}
+.lenis.lenis-stopped{overflow:hidden}
 body{margin:0;background:var(--bg);color:var(--ink);font:400 1.0625rem/1.5 var(--sans);-webkit-font-smoothing:antialiased;overflow-x:hidden}
 #sky{position:fixed;inset:0;width:100%;height:100%;z-index:-1;display:block}
 a{color:inherit}
@@ -53,77 +45,80 @@ img{display:block;max-width:100%}
 :focus-visible{outline:2px solid var(--ink);outline-offset:3px;border-radius:8px}
 .wrap{width:min(1080px,100% - 48px);margin-inline:auto}
 
+/* entrance: on only when JS runs */
+.js .rv{opacity:0;transform:translateY(28px);transition:opacity .9s var(--ease) var(--d,0s),transform .9s var(--ease) var(--d,0s)}
+.js .rv.in{opacity:1;transform:none}
+
 /* hero */
-.hero{padding-inline:24px;min-height:100svh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding-block:64px 128px}
-.mark{margin:0;font-weight:600;font-size:clamp(5.5rem,19vw,11.5rem);line-height:.95;letter-spacing:-.065em;text-shadow:0 6px 48px var(--glow)}
+.hero{min-height:100svh;display:flex;align-items:center;justify-content:center;text-align:center;padding:64px 24px 128px}
+.hero-in{display:flex;flex-direction:column;align-items:center;will-change:transform,opacity}
+.mark{margin:0;font-weight:600;font-size:clamp(5.5rem,19vw,12rem);line-height:.95;letter-spacing:-.065em;text-shadow:0 8px 56px rgba(255,255,255,.6);display:flex}
+.mark span{display:inline-block;transition:transform .6s var(--ease)}
+.mark span:hover{transform:translateY(-.07em)}
+.js .mark span{opacity:0;transform:translateY(.5em);animation:rise 1s var(--ease) forwards;animation-delay:calc(.08s * var(--i))}
+.js .mark span:hover{transform:translateY(-.07em)}
+@keyframes rise{to{opacity:1;transform:none}}
 .tag{margin:16px 0 0;font-size:clamp(1.5rem,3.4vw,2.25rem);font-weight:400;letter-spacing:-.025em;line-height:1.2;text-wrap:balance}
-.sub{margin:20px 0 0;max-width:46ch;color:var(--ink-2);text-wrap:balance}
+.sub{margin:16px 0 0;max-width:40ch;color:var(--ink-2);text-wrap:balance}
 .cta{margin-top:40px;display:flex;flex-direction:column;align-items:center;gap:14px}
-.btn{display:inline-flex;align-items:center;gap:10px;height:52px;padding:0 28px;border-radius:99px;background:var(--ink);color:var(--btn-text);font:600 1rem/1 var(--sans);text-decoration:none;box-shadow:0 10px 30px rgba(29,40,56,.25);transition:transform .16s var(--ease),box-shadow .16s var(--ease)}
+.btn{display:inline-flex;align-items:center;gap:10px;height:56px;padding:0 32px;border-radius:99px;background:var(--ink);color:#fff;font:600 1rem/1 var(--sans);text-decoration:none;box-shadow:0 12px 32px rgba(15,35,71,.28);transition:transform .2s var(--ease),box-shadow .2s var(--ease)}
 .btn svg{width:18px;height:18px}
-.btn:hover{transform:translateY(-2px);box-shadow:0 14px 36px rgba(29,40,56,.3)}
-.btn:active{transform:translateY(0) scale(.98)}
-.btn:focus-visible{outline-color:var(--ink);outline-offset:4px;border-radius:99px}
-.meta{margin:0;font-size:.9375rem;color:var(--ink-2);min-height:1.5em}
-.links{display:flex;gap:24px;font-size:.9375rem}
-.links a{color:var(--ink-2);text-decoration:underline;text-decoration-color:transparent;text-underline-offset:4px;transition:color .16s,text-decoration-color .16s}
-.links a:hover{color:var(--ink);text-decoration-color:currentColor}
+.btn:hover{transform:scale(1.04);box-shadow:0 18px 44px rgba(15,35,71,.34)}
+.btn:active{transform:scale(.97)}
+.btn:focus-visible{outline-offset:4px;border-radius:99px}
+.meta{margin:0;font-size:.9375rem;color:var(--ink-2);min-height:1.5em;text-wrap:balance}
+.meta a{text-underline-offset:3px}
 
 /* sections */
-section{padding:96px 0;scroll-margin-top:0}
-h2{margin:0;font-size:clamp(2rem,4.6vw,3.25rem);font-weight:600;letter-spacing:-.04em;line-height:1.08;text-wrap:balance}
-.lead{margin:16px 0 0;max-width:52ch;color:var(--ink-2);text-wrap:pretty}
-.head{max-width:640px}
-.frame{margin-top:48px;padding:8px;border-radius:24px;background:var(--glass);border:1px solid var(--glass-line);box-shadow:var(--shadow);backdrop-filter:blur(24px) saturate(1.2);-webkit-backdrop-filter:blur(24px) saturate(1.2)}
-.frame>img,.stage img{border-radius:16px;width:100%;height:auto}
-.demo{aspect-ratio:960/540;background:rgba(255,255,255,.2)}
+section{padding:112px 0}
+h2{margin:0;font-size:clamp(2.25rem,5.4vw,4rem);font-weight:600;letter-spacing:-.045em;line-height:1.04;text-wrap:balance;max-width:14ch}
+.lead{margin:20px 0 0;max-width:46ch;color:var(--ink-2);text-wrap:pretty}
+.frame{margin-top:56px;padding:8px;border-radius:28px;background:var(--glass);border:1px solid var(--glass-line);box-shadow:var(--shadow);backdrop-filter:blur(24px) saturate(1.2);-webkit-backdrop-filter:blur(24px) saturate(1.2);transform:perspective(1400px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));will-change:transform}
+.frame img{border-radius:20px;width:100%;height:auto;aspect-ratio:960/540;background:rgba(255,255,255,.3)}
+.trio{margin:48px 0 0;padding:0;list-style:none;display:grid;grid-template-columns:repeat(3,1fr);gap:32px}
+.trio li{font-size:1.1875rem;font-weight:500;letter-spacing:-.02em;line-height:1.3;text-wrap:balance}
+.trio li span{display:block;margin-top:6px;font-size:1rem;font-weight:400;letter-spacing:0;color:var(--ink-2)}
+.final{margin-top:40px;display:flex;flex-direction:column;align-items:flex-start;gap:14px}
 
-/* screenshot switcher */
-.sub-h{margin:112px 0 0;font-size:clamp(1.5rem,3vw,2rem);font-weight:600;letter-spacing:-.03em;line-height:1.15}
-.tabs{margin-top:24px;display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:2px}
-.tabs::-webkit-scrollbar{display:none}
-.tab{flex:none;height:44px;padding:0 20px;border-radius:99px;border:1px solid var(--glass-line);background:var(--glass);color:var(--ink-2);font:500 .9375rem/1 var(--sans);cursor:pointer;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);transition:background-color .16s,color .16s,transform .16s var(--ease)}
-.tab:hover{color:var(--ink);background:var(--tile)}
-.tab:active{transform:scale(.97)}
-.tab[aria-selected=true]{background:var(--ink);color:var(--btn-text);border-color:transparent}
-.stage{position:relative;aspect-ratio:1800/1025}
-.stage img{position:absolute;inset:0;height:100%;object-fit:cover;opacity:0;transition:opacity .3s var(--ease)}
-.stage img.on{opacity:1}
-.cap{margin:20px 0 0;max-width:62ch;min-height:3em;text-wrap:pretty}
-.cap b{font-weight:600}
-.also{margin:56px 0 0;max-width:62ch;color:var(--ink-2);text-wrap:pretty}
+/* footer: cobalt, made by chengxi */
+footer{position:relative;overflow:hidden;background:var(--cobalt);color:#f2f6ff;border-radius:48px 48px 0 0;padding:112px 0 120px;isolation:isolate}
+footer::before{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(520px circle at var(--mx,70%) var(--my,10%),rgba(120,175,255,.42),transparent 60%);opacity:var(--lit,.55);transition:opacity .4s var(--ease)}
+.big{margin:0;font:400 clamp(3.5rem,10.5vw,9rem)/.94 var(--serif);letter-spacing:-.025em}
+.big em{font-style:italic;color:#b9d2ff}
+.note{margin:28px 0 0;max-width:34ch;font:400 1.25rem/1.35 "Endless",var(--sans);color:rgba(242,246,255,.82)}
+.flinks{margin:56px 0 0;display:flex;flex-wrap:wrap;gap:0 36px;font:500 1rem/1 var(--mono)}
+.flinks a,.base a{position:relative;display:inline-block;padding:14px 0;text-decoration:none}
+.flinks a::after,.base a::after{content:"";position:absolute;left:0;right:0;bottom:9px;height:1px;background:currentColor;transform:scaleX(0);transform-origin:right;transition:transform .4s var(--ease)}
+.flinks a:hover::after,.base a:hover::after,.flinks a:focus-visible::after,.base a:focus-visible::after{transform:scaleX(1);transform-origin:left}
+.flinks a:hover{color:#b9d2ff}
+footer :focus-visible{outline-color:#fff}
+.base{margin-top:72px;padding-top:12px;border-top:1px solid rgba(255,255,255,.18);display:flex;flex-wrap:wrap;gap:4px 32px;align-items:center;font:400 .8125rem/1.4 var(--mono);color:rgba(242,246,255,.72)}
+.base .sp{margin-right:auto}
+.base time{font-variant-numeric:tabular-nums}
 
-/* install */
-.steps{margin:56px 0 0;padding:0;list-style:none;display:grid;grid-template-columns:repeat(3,1fr);gap:40px}
-.steps li{display:grid;gap:8px;align-content:start}
-.n{display:grid;place-items:center;width:36px;height:36px;border-radius:50%;background:var(--glass);border:1px solid var(--glass-line);font-weight:600;font-size:.9375rem;font-variant-numeric:tabular-nums;margin-bottom:8px;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
-.steps h3{margin:0;font-size:1.1875rem;font-weight:600;letter-spacing:-.02em;line-height:1.3}
-.steps p{margin:0;color:var(--ink-2);text-wrap:pretty}
-code{font:500 .9em/1 var(--sans);padding:2px 7px;border-radius:7px;background:var(--glass);border:1px solid var(--glass-line);white-space:nowrap}
-.final{margin-top:64px;display:flex;flex-direction:column;align-items:flex-start;gap:14px}
-.fine{margin:40px 0 0;max-width:62ch;color:var(--ink-2);font-size:.9375rem;text-wrap:pretty}
-.fine+.fine{margin-top:12px}
-footer{padding:48px 0 160px;color:var(--ink-2);font-size:.9375rem}
-footer .wrap{display:flex;flex-wrap:wrap;gap:12px 32px;align-items:center}
-footer a{text-underline-offset:4px;text-decoration-color:transparent;transition:text-decoration-color .16s,color .16s}
-footer a:hover{color:var(--ink);text-decoration-color:currentColor}
-footer .by{margin-right:auto}
+/* cursor halo (mouse only) */
+.halo{position:fixed;left:0;top:0;z-index:20;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;border:1.5px solid rgba(15,35,71,.5);background:rgba(255,255,255,.14);pointer-events:none;opacity:0;transition:opacity .3s var(--ease),border-color .3s var(--ease),background-color .3s var(--ease),width .3s var(--ease),height .3s var(--ease),margin .3s var(--ease)}
+.halo.show{opacity:1}
+.halo.big{width:72px;height:72px;margin:-36px 0 0 -36px;background:rgba(255,255,255,.22)}
+.halo.dark{border-color:rgba(255,255,255,.75);background:rgba(255,255,255,.06)}
+@media (hover:none),(pointer:coarse){.halo{display:none}}
 
 /* the dock: this page's nav is wispy */
 #bar{position:fixed;left:0;right:0;bottom:0;z-index:10;display:flex;justify-content:center;pointer-events:none;padding-bottom:max(14px,env(safe-area-inset-bottom))}
 .pillhit{position:absolute;bottom:0;left:50%;width:180px;height:48px;transform:translateX(-50%);pointer-events:auto}
 .pill{position:absolute;bottom:max(12px,env(safe-area-inset-bottom));left:50%;width:132px;height:8px;margin-left:-66px;border-radius:99px;background:var(--ink);opacity:.5;transform:translate3d(var(--lean,0px),var(--lift,0px),0) scaleX(var(--w,1));transition:transform .3s var(--ease),opacity .2s var(--ease)}
+body.dark-zone .pill{background:#fff;opacity:.65}
 #bar[data-state=near] .pill{opacity:.85;--lift:-8px;--w:1.2}
 #bar[data-state=open] .pill{opacity:0;--lift:-24px}
 .dock{position:relative;display:flex;align-items:flex-end;gap:8px;padding:10px 12px;border-radius:30px;background:var(--glass);border:1px solid var(--glass-line);box-shadow:var(--shadow);backdrop-filter:blur(26px) saturate(1.25);-webkit-backdrop-filter:blur(26px) saturate(1.25);opacity:0;transform:translateY(28px);pointer-events:none;transition:transform .32s var(--ease),opacity .2s var(--ease)}
 #bar[data-state=open] .dock,#bar:focus-within .dock{opacity:1;transform:none;pointer-events:auto}
 #bar:focus-within .pill{opacity:0}
 .di{position:relative;display:block;width:var(--s,52px);height:var(--s,52px);flex:none;text-decoration:none;-webkit-tap-highlight-color:transparent}
-.di .tile{position:absolute;inset:0;display:grid;place-items:center;border-radius:27%;background:var(--tile);box-shadow:0 1px 0 rgba(255,255,255,.5) inset,0 6px 16px rgba(40,60,100,.14);transition:background-color .16s}
+.di .tile{position:absolute;inset:0;display:grid;place-items:center;border-radius:27%;background:var(--tile);box-shadow:0 1px 0 rgba(255,255,255,.6) inset,0 6px 16px rgba(30,80,170,.16)}
 .di svg{width:46%;height:46%;fill:none;stroke:var(--ink);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .di.gh svg{fill:var(--ink);stroke:none}
 .di.get .tile{background:var(--ink)}
-.di.get svg{stroke:var(--btn-text)}
+.di.get svg{stroke:#fff}
 .di:focus-visible{outline:none}
 .di:focus-visible .tile{outline:2px solid var(--ink);outline-offset:3px}
 .di .lbl{position:absolute;bottom:calc(100% + 10px);left:50%;transform:translate(-50%,4px);padding:6px 12px;border-radius:12px;background:var(--glass);border:1px solid var(--glass-line);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);font-size:.8125rem;font-weight:500;line-height:1.2;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .14s var(--ease),transform .14s var(--ease)}
@@ -134,7 +129,6 @@ footer .by{margin-right:auto}
 .hint{position:fixed;left:50%;bottom:92px;z-index:9;transform:translate(-50%,8px);padding:8px 16px;border-radius:99px;background:var(--glass);border:1px solid var(--glass-line);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);font-size:.875rem;color:var(--ink-2);white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .4s var(--ease),transform .4s var(--ease)}
 .hint.show{opacity:1;transform:translate(-50%,0)}
 
-/* touch: no cursor to chase, so the dock stays open */
 @media (hover:none){
   .pill,.pillhit,.hint{display:none}
   .dock{opacity:1;transform:none;pointer-events:auto}
@@ -143,102 +137,86 @@ footer .by{margin-right:auto}
   #bar{padding-bottom:max(18px,env(safe-area-inset-bottom))}
 }
 @media (max-width:760px){
-  section{padding:72px 0}
-  .steps{grid-template-columns:1fr;gap:32px}
-  .sub-h{margin-top:80px}
-  .frame{margin-top:32px;border-radius:20px;padding:6px}
-  .frame>img,.stage img{border-radius:14px}
-  footer .by{flex-basis:100%}
+  section{padding:80px 0}
+  .trio{grid-template-columns:1fr;gap:24px}
+  .frame{margin-top:40px;border-radius:22px;padding:6px}
+  .frame img{border-radius:16px}
+  footer{border-radius:32px 32px 0 0;padding:80px 0 128px}
+  .flinks{gap:0 18px}
+  .base{margin-top:48px}
 }
 @media (prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}
+  .js .rv,.js .mark span{opacity:1;transform:none;animation:none}
   *{transition-duration:.01ms!important}
 }
 </style>
 </head>
 <body>
 <canvas id="sky" aria-hidden="true"></canvas>
+<div class="halo" id="halo" aria-hidden="true"></div>
 
 <main>
   <header class="hero" id="top">
-    <h1 class="mark">wispy</h1>
-    <p class="tag">Your taskbar, as a home bar.</p>
-    <p class="sub">A thin pill that rises to meet your cursor, opens into a dock, and holds search, quick settings and notifications.</p>
-    <div class="cta">
-      <a class="btn" data-dl href="https://github.com/chengxii-lii/wispy/releases/download/v1.0.0/wispy-v1.0.0-win-x64.zip">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m0 0-5-5m5 5 5-5M5 20h14"/></svg>
-        Download for Windows
-      </a>
-      <p class="meta" data-meta>Free and open source. Windows 11, <span data-ver>v1.0.0</span>, <span data-size>151 MB</span>.</p>
-      <div class="links">
-        <a href="#features">See how it works</a>
-        <a href="https://github.com/chengxii-lii/wispy">View on GitHub</a>
+    <div class="hero-in" id="heroIn">
+      <h1 class="mark" aria-label="wispy"><span style="--i:0" aria-hidden="true">w</span><span style="--i:1" aria-hidden="true">i</span><span style="--i:2" aria-hidden="true">s</span><span style="--i:3" aria-hidden="true">p</span><span style="--i:4" aria-hidden="true">y</span></h1>
+      <p class="tag rv" style="--d:.45s">Your taskbar, as a home bar.</p>
+      <p class="sub rv" style="--d:.55s">A thin pill that rises to meet your cursor and opens into a dock.</p>
+      <div class="cta rv" style="--d:.7s">
+        <a class="btn" data-dl data-mag href="https://github.com/chengxii-lii/wispy/releases/download/v1.0.0/wispy-v1.0.0-win-x64.zip">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m0 0-5-5m5 5 5-5M5 20h14"/></svg>
+          Download for Windows
+        </a>
+        <p class="meta" data-meta>Free and open source. Windows 11, <span data-ver>v1.0.0</span>, <span data-size>151 MB</span>.</p>
       </div>
     </div>
   </header>
 
   <section id="features">
     <div class="wrap">
-      <div class="head">
-        <h2>Nothing on screen, then a pill, then a dock.</h2>
-        <p class="lead">wispy waits at the bottom edge. Move toward it and a thin pill leans your way. Touch the edge and it opens into a dock whose icons grow as you sweep across them.</p>
+      <h2 class="rv">Nothing on screen, then a pill, then a dock.</h2>
+      <div class="frame rv" id="tilt">
+        <img src="img/demo.gif" width="960" height="540" loading="lazy" alt="wispy in action: the pill rises as the cursor nears the bottom, the dock opens, icons magnify, then the Windows key opens search and quick settings">
       </div>
-      <div class="frame">
-        <img class="demo" src="img/demo.gif" width="960" height="540" loading="lazy" alt="wispy in action: the pill rises as the cursor nears the bottom, the dock opens, icons magnify, then the Windows key opens search and quick settings">
-      </div>
-
-      <h3 class="sub-h">Everything the taskbar had, and a bit more.</h3>
-      <div class="tabs" role="tablist" aria-label="wispy features">
-        <button class="tab" role="tab" id="t0" aria-controls="stage" aria-selected="true" data-i="0">Search</button>
-        <button class="tab" role="tab" id="t1" aria-controls="stage" aria-selected="false" tabindex="-1" data-i="1">Quick settings</button>
-        <button class="tab" role="tab" id="t2" aria-controls="stage" aria-selected="false" tabindex="-1" data-i="2">Notifications</button>
-        <button class="tab" role="tab" id="t3" aria-controls="stage" aria-selected="false" tabindex="-1" data-i="3">Make it yours</button>
-        <button class="tab" role="tab" id="t4" aria-controls="stage" aria-selected="false" tabindex="-1" data-i="4">Dark</button>
-      </div>
-      <div class="frame" style="margin-top:16px">
-        <div class="stage" id="stage" role="tabpanel" aria-labelledby="t0">
-          <img class="on" src="img/search.jpg" width="1800" height="1025" loading="lazy" alt="Searching 'mu' shows the Music app with Open, Run as administrator, Open file location and Unpin actions">
-          <img src="img/sound.jpg" width="1800" height="1025" loading="lazy" alt="The Sound page: output devices and a per-app volume mixer">
-          <img src="img/notifications.jpg" width="1800" height="1025" loading="lazy" alt="Today's notifications above a calendar, with a Do not disturb switch">
-          <img src="img/settings.jpg" width="1800" height="1025" loading="lazy" alt="wispy's settings: theme, accent colour, glass, icon size, magnification, behaviour">
-          <img src="img/dark.jpg" width="1800" height="1025" loading="lazy" alt="wispy in its dark theme">
-        </div>
-      </div>
-      <p class="cap" id="cap" aria-live="polite"></p>
-      <p class="also">Also in the box: your pinned apps in your Windows order, running dots, drag to reorder, a window picker, right-click menus like the taskbar's, the hidden-icons menu, an input language switcher, Task view and a power menu.</p>
+      <ul class="trio">
+        <li class="rv">Search on the Windows key.<span>Apps, settings, files and power commands.</span></li>
+        <li class="rv" style="--d:.1s">Wi-Fi, Bluetooth and sound in reach.<span>Without opening Settings.</span></li>
+        <li class="rv" style="--d:.2s">Notifications that leave on their own.<span>And Do not disturb is one switch.</span></li>
+      </ul>
     </div>
   </section>
 
   <section id="install">
     <div class="wrap">
-      <div class="head">
-        <h2>Try it in a minute.</h2>
-        <p class="lead">No installer wizard and no admin rights. If you don't like it, quit it and your taskbar is right where you left it.</p>
-      </div>
-      <ol class="steps">
-        <li><span class="n">1</span><h3>Download and unzip</h3><p>Grab the zip below. It's about <span data-size>151 MB</span>.</p></li>
-        <li><span class="n">2</span><h3>Double-click <code>Install wispy.cmd</code></h3><p>Rather look first? Run <code>wispy\wispy.exe</code> straight from the folder and nothing gets installed.</p></li>
-        <li><span class="n">3</span><h3>Move to the bottom edge</h3><p>wispy hides the Windows taskbar and takes over. Quit from its right-click menu and the taskbar comes back, exactly as it was.</p></li>
-      </ol>
-      <div class="final">
-        <a class="btn" data-dl href="https://github.com/chengxii-lii/wispy/releases/download/v1.0.0/wispy-v1.0.0-win-x64.zip">
+      <h2 class="rv">Try it in a minute.</h2>
+      <p class="lead rv" style="--d:.1s">Unzip, double-click <b>Install wispy.cmd</b>, then move to the bottom edge. Quit whenever you like and your taskbar comes back exactly as it was.</p>
+      <div class="final rv" style="--d:.2s">
+        <a class="btn" data-dl data-mag href="https://github.com/chengxii-lii/wispy/releases/download/v1.0.0/wispy-v1.0.0-win-x64.zip">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m0 0-5-5m5 5 5-5M5 20h14"/></svg>
           Download wispy <span data-ver>v1.0.0</span>
         </a>
-        <p class="meta" data-meta>Windows 11 · 64-bit · MIT licence · <a href="https://github.com/chengxii-lii/wispy/releases/download/v1.0.0/wispy-v1.0.0-win-x64.zip.sha256" data-sha>SHA-256</a></p>
+        <p class="meta" data-meta>No accounts, no tracking. Windows may ask you to choose <b>More info</b>, then <b>Run anyway</b>, because wispy isn't code-signed yet.</p>
       </div>
-      <p class="fine">Windows may say the app is unrecognised, because wispy isn't code-signed yet. Choose <b>More info</b>, then <b>Run anyway</b>. Its code is all on <a href="https://github.com/chengxii-lii/wispy">GitHub</a>, and the native helper is a few readable C# files.</p>
-      <p class="fine">No accounts, no analytics, no servers. Everything stays on your PC. wispy only touches the internet when you pick a web search, and then it opens your browser.</p>
     </div>
   </section>
 </main>
 
-<footer>
+<footer id="contact">
   <div class="wrap">
-    <span class="by">wispy, made by ThinkTrout. Free under the MIT licence.</span>
-    <a href="https://github.com/chengxii-lii/wispy">GitHub</a>
-    <a href="https://github.com/chengxii-lii/wispy/blob/main/CHANGELOG.md">Changelog</a>
-    <a href="https://github.com/chengxii-lii/wispy/issues">Report a problem</a>
+    <p class="big">Made with <em>love</em><br>by Chengxi.</p>
+    <p class="note">A small thing for people who like a tidy desktop. Say hi, or tell me what broke.</p>
+    <nav class="flinks" aria-label="Links">
+      <a href="https://instagram.com/chengxi.dzn" data-mag>instagram</a>
+      <a href="https://www.linkedin.com/in/chengxi-li-b371b3346" data-mag>linkedin</a>
+      <a href="https://github.com/chengxii-lii" data-mag>github</a>
+      <a href="mailto:chengxi.li.usa@gmail.com" data-mag>email</a>
+    </nav>
+    <div class="base">
+      <span class="sp">wispy <span data-ver>v1.0.0</span>, free and open source (MIT)</span>
+      <a href="https://github.com/chengxii-lii/wispy/blob/main/CHANGELOG.md">changelog</a>
+      <a href="https://github.com/chengxii-lii/wispy/issues">report a problem</a>
+      <span>Rochester, NY <time id="clock"></time></span>
+    </div>
   </div>
 </footer>
 
@@ -249,99 +227,193 @@ footer .by{margin-right:auto}
   <div class="pill"></div>
   <div class="dock" id="dock">
     <a class="di on" href="#top" data-sec="top"><span class="tile"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 18.5a4 4 0 0 1-.6-7.95A5.5 5.5 0 0 1 17 9a4.75 4.75 0 0 1 .5 9.5z"/></svg></span><span class="lbl">Home</span><i class="dot"></i></a>
-    <a class="di" href="#features" data-sec="features"><span class="tile"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6.5" height="6.5" rx="1.8"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.8"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.8"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.8"/></svg></span><span class="lbl">What's inside</span><i class="dot"></i></a>
+    <a class="di" href="#features" data-sec="features"><span class="tile"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6.5" height="6.5" rx="1.8"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.8"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.8"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.8"/></svg></span><span class="lbl">See it move</span><i class="dot"></i></a>
     <a class="di" href="#install" data-sec="install"><span class="tile"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8.2 12 4l8 4.2v7.6L12 20l-8-4.2zM4 8.2l8 4.3 8-4.3M12 12.5V20"/></svg></span><span class="lbl">Install</span><i class="dot"></i></a>
-    <a class="di gh" href="https://github.com/chengxii-lii/wispy"><span class="tile"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .3a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 0-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.300-1.200 3.300-1.200.7 1.700.2 2.900.1 3.200.8.800 1.200 1.900 1.200 3.200 0 4.600-2.800 5.600-5.500 5.900.4.400.8 1.100.8 2.200v3.300c0 .3.2.7.8.6A12 12 0 0 0 12 .3"/></svg></span><span class="lbl">GitHub</span><i class="dot"></i></a>
+    <a class="di gh" href="https://github.com/chengxii-lii/wispy"><span class="tile"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .3a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 0-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.7 1.7.2 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .3"/></svg></span><span class="lbl">GitHub</span><i class="dot"></i></a>
     <span class="sep" aria-hidden="true"></span>
     <a class="di get" data-dl href="https://github.com/chengxii-lii/wispy/releases/download/v1.0.0/wispy-v1.0.0-win-x64.zip"><span class="tile"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0-5-5m5 5 5-5M5 20h14"/></svg></span><span class="lbl">Download</span><i class="dot"></i></a>
   </div>
 </nav>
 
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js"></script>
 <script>
 (() => {
   const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
   const REPO = 'chengxii-lii/wispy';
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const canHover = matchMedia('(hover: hover) and (pointer: fine)').matches;
+  const lerp = (a, b, k) => a + (b - a) * k;
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
-  /* ---------- sky: soft clouds, drifting slowly ---------- */
-  (() => {
+  /* the pointer, shared by everything that reacts to it */
+  const P = { x: -1, y: -1, lx: 0, ly: 0, speed: 0, active: false };
+  addEventListener('pointermove', e => {
+    P.speed = Math.hypot(e.clientX - P.lx, e.clientY - P.ly);
+    P.lx = P.x = e.clientX; P.ly = P.y = e.clientY; P.active = true;
+  }, { passive: true });
+  document.documentElement.addEventListener('mouseleave', () => { P.active = false; });
+
+  /* ---------- smooth scroll ---------- */
+  const lenis = (typeof Lenis !== 'undefined' && !reduce) ? new Lenis({ lerp: 0.085, wheelMultiplier: 0.9 }) : null;
+  const scrollY = () => lenis ? lenis.scroll : window.scrollY;
+  $$('a[href^="#"]').forEach(a => a.addEventListener('click', e => {
+    const id = a.getAttribute('href').slice(1), el = document.getElementById(id);
+    if (!el) return;
+    e.preventDefault();
+    if (lenis) lenis.scrollTo(id === 'top' ? 0 : el, { duration: 1.5, easing: t => 1 - Math.pow(1 - t, 4) });
+    else el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth' });
+    history.replaceState(null, '', '#' + id);
+  }));
+
+  /* ---------- sky: bright clouds that part around the cursor ---------- */
+  const sky = (() => {
     const cv = $('#sky');
     const gl = cv.getContext('webgl', { antialias: false, alpha: false, powerPreference: 'low-power' });
-    if (!gl) return;
+    if (!gl) return null;
     const VERT = 'attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}';
     const FRAG = `precision highp float;
-uniform vec2 r; uniform float t; uniform float night;
+uniform vec2 r; uniform float t; uniform vec2 m; uniform float k; uniform float vel;
 float h(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}
 float n(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);
   return mix(mix(h(i),h(i+vec2(1.,0.)),f.x),mix(h(i+vec2(0.,1.)),h(i+vec2(1.,1.)),f.x),f.y);}
 float fbm(vec2 p){float a=.5,s=0.;for(int i=0;i<6;i++){s+=a*n(p);p=p*2.03+vec2(17.,9.);a*=.5;}return s;}
 void main(){
   vec2 uv=gl_FragCoord.xy/r;
-  vec2 p=vec2(uv.x*r.x/r.y,uv.y)*1.7+vec2(t*1.3,t*.45);
+  vec2 asp=vec2(r.x/r.y,1.);
+  vec2 dm=(uv-m)*asp;
+  float f=exp(-dot(dm,dm)*(16.-9.*vel))*k;
+  vec2 p=uv*asp*1.7+vec2(t*1.3,t*.45);
+  p-=dm*f*1.1;
   vec2 q=vec2(fbm(p),fbm(p+vec2(5.2,1.3)));
   float c=fbm(p+1.7*q);
   float d=fbm(p+1.7*q+vec2(.05,.09));
-  float cl=smoothstep(.33,.72,c);
+  float cl=smoothstep(.36,.74,c);
+  cl*=1.-.7*f;
   float shade=clamp((c-d)*5.,0.,1.);
-  vec3 skyTop=mix(vec3(.66,.77,.92),vec3(.07,.10,.23),night);
-  vec3 skyLow=mix(vec3(.90,.94,.985),vec3(.19,.24,.42),night);
+  vec3 skyTop=vec3(.22,.52,.98);
+  vec3 skyLow=vec3(.70,.86,1.);
   vec3 sky=mix(skyLow,skyTop,smoothstep(.0,1.,uv.y));
-  vec3 lit=mix(vec3(1.),vec3(.44,.50,.70),night);
-  vec3 dim=mix(vec3(.70,.76,.88),vec3(.24,.28,.46),night);
-  vec3 col=mix(sky,mix(lit,dim,shade*.8),cl);
+  float sun=exp(-length((uv-vec2(.84,1.02))*asp)*2.4);
+  sky+=vec3(1.,.96,.88)*sun*.32;
+  vec3 lit=vec3(1.);
+  vec3 dim=vec3(.82,.9,1.);
+  vec3 col=mix(sky,mix(lit,dim,shade*.55),cl*.97);
+  col+=vec3(1.,.98,.92)*f*.08;
   gl_FragColor=vec4(col,1.);
 }`;
     const sh = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; };
     let pr;
-    try { pr = gl.createProgram(); gl.attachShader(pr, sh(gl.VERTEX_SHADER, VERT)); gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, FRAG)); gl.linkProgram(pr); } catch (e) { return; }
+    try { pr = gl.createProgram(); gl.attachShader(pr, sh(gl.VERTEX_SHADER, VERT)); gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, FRAG)); gl.linkProgram(pr); } catch (e) { return null; }
     gl.useProgram(pr);
     gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
     const a = gl.getAttribLocation(pr, 'a'); gl.enableVertexAttribArray(a); gl.vertexAttribPointer(a, 2, gl.FLOAT, false, 0, 0);
-    const U = n => gl.getUniformLocation(pr, n);
-    const dark = matchMedia('(prefers-color-scheme: dark)');
-    const start = 1.2 + Math.random() * 3;
-    let last = 0;
+    const U = Object.fromEntries(['r', 't', 'm', 'k', 'vel'].map(n => [n, gl.getUniformLocation(pr, n)]));
+    const start = 2.2 + Math.random() * 3;
+    const S = { mx: .5, my: .5, k: 0, vel: 0, last: 0 };
     const size = () => {
-      const k = 0.45; // clouds are soft: render small, let the browser smooth it up
-      cv.width = Math.max(2, Math.round(innerWidth * k)); cv.height = Math.max(2, Math.round(innerHeight * k));
+      const q = 0.42; // clouds are soft: render small, let the browser smooth it up
+      cv.width = Math.max(2, Math.round(innerWidth * q)); cv.height = Math.max(2, Math.round(innerHeight * q));
       gl.viewport(0, 0, cv.width, cv.height);
     };
     const draw = ms => {
-      gl.uniform2f(U('r'), cv.width, cv.height);
-      gl.uniform1f(U('t'), start + ms * 0.000009);
-      gl.uniform1f(U('night'), dark.matches ? 1 : 0);
+      gl.uniform2f(U.r, cv.width, cv.height);
+      gl.uniform1f(U.t, start + ms * 0.000011);
+      gl.uniform2f(U.m, S.mx, S.my);
+      gl.uniform1f(U.k, S.k);
+      gl.uniform1f(U.vel, S.vel);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     };
-    const tick = ms => {
-      if (!document.hidden && ms - last > 33) { last = ms; draw(ms); }
-      requestAnimationFrame(tick);
-    };
     size(); draw(0);
-    addEventListener('resize', () => { size(); draw(last); });
-    dark.addEventListener('change', () => draw(last));
-    if (!reduce) requestAnimationFrame(tick);
+    addEventListener('resize', () => { size(); draw(S.last); });
+    return {
+      frame(ms) {
+        if (document.hidden || reduce || ms - S.last < 24) return;
+        S.last = ms;
+        if (P.active) { S.mx = lerp(S.mx, P.x / innerWidth, .1); S.my = lerp(S.my, 1 - P.y / innerHeight, .1); }
+        S.k = lerp(S.k, P.active ? 1 : 0, .07);
+        S.vel = Math.max(S.vel * .94, clamp(P.speed / 60, 0, 1));
+        P.speed *= .8;
+        draw(ms);
+      }
+    };
   })();
 
+  /* ---------- halo, magnets, tilt, hero parallax ---------- */
+  const halo = $('#halo'), heroIn = $('#heroIn'), tilt = $('#tilt'), footer = $('#contact');
+  const H = { x: 0, y: 0 }, parX = { v: 0 }, parY = { v: 0 }, T = { rx: 0, ry: 0 };
+  const mags = $$('[data-mag]').map(el => ({ el, x: 0, y: 0 }));
+  if (canHover) {
+    document.addEventListener('pointerover', e => halo.classList.toggle('big', !!e.target.closest('a,button,[data-mag]')));
+  }
+  const pointerFx = () => {
+    const w = innerWidth, hgt = innerHeight;
+    // halo
+    if (canHover && P.active) {
+      H.x = lerp(H.x || P.x, P.x, .22); H.y = lerp(H.y || P.y, P.y, .22);
+      halo.style.transform = `translate3d(${H.x}px,${H.y}px,0)`;
+      halo.classList.add('show');
+      const dark = P.y > footer.getBoundingClientRect().top;
+      halo.classList.toggle('dark', dark);
+    } else halo.classList.remove('show');
+    document.body.classList.toggle('dark-zone', footer.getBoundingClientRect().top < hgt - 40);
+    // magnets: pull toward the pointer when it is near
+    if (canHover && !reduce) for (const m of mags) {
+      const r = m.el.getBoundingClientRect();
+      const cx = r.left + r.width / 2 - m.x, cy = r.top + r.height / 2 - m.y;
+      const dx = P.x - cx, dy = P.y - cy, near = P.active && Math.hypot(dx, dy) < Math.max(r.width, 90) * .8 + 40;
+      m.x = lerp(m.x, near ? dx * .28 : 0, .16); m.y = lerp(m.y, near ? dy * .28 : 0, .16);
+      m.el.style.translate = Math.abs(m.x) + Math.abs(m.y) < .05 ? '' : `${m.x.toFixed(2)}px ${m.y.toFixed(2)}px`;
+    }
+    // hero: drifts against the pointer, and lifts away as you scroll
+    const sy = scrollY();
+    const tx = P.active && canHover ? (P.x / w - .5) * 2 : 0, ty = P.active && canHover ? (P.y / hgt - .5) * 2 : 0;
+    parX.v = lerp(parX.v, tx, .06); parY.v = lerp(parY.v, ty, .06);
+    if (sy < hgt * 1.2) {
+      heroIn.style.transform = `translate3d(${(-parX.v * 12).toFixed(2)}px,${(-parY.v * 8 + sy * .25).toFixed(2)}px,0)`;
+      heroIn.style.opacity = clamp(1 - sy / (hgt * .8), 0, 1).toFixed(3);
+    }
+    // demo frame: leans toward the pointer
+    if (tilt && canHover && !reduce) {
+      const r = tilt.getBoundingClientRect();
+      const inside = P.active && r.bottom > 0 && r.top < hgt && P.x > r.left - 80 && P.x < r.right + 80 && P.y > r.top - 80 && P.y < r.bottom + 80;
+      const nx = inside ? clamp((P.x - (r.left + r.width / 2)) / r.width, -.6, .6) : 0, ny = inside ? clamp((P.y - (r.top + r.height / 2)) / r.height, -.6, .6) : 0;
+      T.ry = lerp(T.ry, nx * 7, .08); T.rx = lerp(T.rx, -ny * 7, .08);
+      tilt.style.setProperty('--rx', T.rx.toFixed(2) + 'deg'); tilt.style.setProperty('--ry', T.ry.toFixed(2) + 'deg');
+    }
+    // footer spotlight
+    if (P.active) {
+      const fr = footer.getBoundingClientRect();
+      if (P.y > fr.top - 120) { footer.style.setProperty('--mx', (P.x - fr.left) + 'px'); footer.style.setProperty('--my', (P.y - fr.top) + 'px'); footer.style.setProperty('--lit', '1'); }
+      else footer.style.setProperty('--lit', '.55');
+    }
+  };
+
+  const loop = ms => {
+    if (lenis) lenis.raf(ms);
+    sky && sky.frame(ms);
+    pointerFx();
+    requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+
+  /* ---------- reveal on scroll ---------- */
+  const rio = new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting) { en.target.classList.add('in'); rio.unobserve(en.target); } }), { rootMargin: '0px 0px -8% 0px', threshold: .08 });
+  $$('.rv').forEach(el => rio.observe(el));
+
   /* ---------- latest release: keep the download button honest ---------- */
-  const dls = $$('[data-dl]');
-  const metas = $$('[data-meta]');
+  const dls = $$('[data-dl]'), metas = $$('[data-meta]');
   const metaOriginal = metas.map(m => m.innerHTML);
   fetch(`https://api.github.com/repos/${REPO}/releases/latest`, { headers: { Accept: 'application/vnd.github+json' } })
     .then(r => r.ok ? r.json() : Promise.reject())
     .then(rel => {
       const zip = (rel.assets || []).find(x => /-win-x64\.zip$/.test(x.name));
       if (!zip) return;
-      const sha = (rel.assets || []).find(x => x.name === zip.name + '.sha256');
       dls.forEach(a => a.href = zip.browser_download_url);
       $$('[data-ver]').forEach(e => e.textContent = rel.tag_name);
       $$('[data-size]').forEach(e => e.textContent = Math.round(zip.size / 1048576) + ' MB');
-      if (sha) $$('[data-sha]').forEach(e => e.href = sha.browser_download_url);
-      metas.forEach((m, i) => metaOriginal[i] = m.innerHTML);
     })
     .catch(() => {}); // the hard-coded v1.0.0 link keeps working
-
   if (!/Windows/i.test(navigator.userAgent)) {
     metas[0].innerHTML = 'wispy is for Windows 11 PCs. Grab it now, or come back from yours.';
     metaOriginal[0] = metas[0].innerHTML;
@@ -352,54 +424,32 @@ void main(){
     a._t = setTimeout(() => metas.forEach((m, i) => m.innerHTML = metaOriginal[i]), 9000);
   }));
 
-  /* ---------- screenshot switcher ---------- */
-  const caps = [
-    '<b>Tap the Windows key and type.</b> Apps, settings, files and power commands, with the same actions Windows search gives you, including run as administrator and open file location.',
-    '<b>Quick settings that go all the way.</b> Join Wi-Fi with a password, connect Bluetooth headphones, choose where sound plays and mix each app\'s volume, without opening Settings.',
-    '<b>Notifications that behave.</b> Popups appear above the bar and leave on their own, today\'s list lives under the clock, and Do not disturb is one switch.',
-    '<b>Make it yours.</b> Theme, accent colour, glass, icon size, magnification, how close the cursor must get, one screen or all of them, a 24-hour clock, and which buttons show.',
-    '<b>Light or dark,</b> following Windows or your choice. A new accent colour recolours the lot.'
-  ];
-  const tabs = $$('.tab'), shots = $$('.stage img'), cap = $('#cap'), stage = $('#stage');
-  const pick = (i, focus) => {
-    tabs.forEach((t, j) => { t.setAttribute('aria-selected', j === i); t.tabIndex = j === i ? 0 : -1; });
-    shots.forEach((s, j) => s.classList.toggle('on', j === i));
-    cap.innerHTML = caps[i];
-    stage.setAttribute('aria-labelledby', 't' + i);
-    if (focus) tabs[i].focus();
-  };
-  tabs.forEach((t, i) => {
-    t.addEventListener('click', () => pick(i));
-    t.addEventListener('keydown', e => {
-      const k = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
-      if (k) { e.preventDefault(); pick((i + k + tabs.length) % tabs.length, true); }
-      if (e.key === 'Home') { e.preventDefault(); pick(0, true); }
-      if (e.key === 'End') { e.preventDefault(); pick(tabs.length - 1, true); }
-    });
-  });
-  pick(0);
+  /* ---------- Rochester time ---------- */
+  const clock = $('#clock');
+  const fmt = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', hour: 'numeric', minute: '2-digit' });
+  const tick = () => { clock.textContent = fmt.format(new Date()); };
+  tick(); setInterval(tick, 20000);
 
   /* ---------- the dock ---------- */
-  const bar = $('#bar'), dock = $('#dock'), hit = $('#hit'), hint = $('#hint');
+  const bar = $('#bar'), dock = $('#dock'), hint = $('#hint');
   const items = $$('.di', dock);
   const BASE = 52, MAX = 0.55, SIGMA = 56;
-  let state = 'idle', closeT, userMoved = false, everOpened = false;
+  let state = 'idle', closeT, userMoved = false;
   const cur = items.map(() => 1), tgt = items.map(() => 1);
   let raf = 0, centers = [];
 
   const setState = s => {
     if (s === state) return;
     state = s; bar.dataset.state = s;
-    if (s === 'open') { everOpened = true; hint.classList.remove('show'); measure(); }
+    if (s === 'open') { hint.classList.remove('show'); measure(); }
     else tgt.fill(1), kick();
   };
   const measure = () => {
     // base centres, so magnification doesn't feed back into itself
     const r = dock.getBoundingClientRect();
-    const total = items.reduce((n, el) => n + BASE, 0) + 8 * (items.length) + 2 + 24; // items + gaps + separator + padding
+    const total = items.length * BASE + 8 * items.length + 2 + 24;
     let x = r.left + (r.width - total) / 2 + 12;
     centers = items.map(() => { const c = x + BASE / 2; x += BASE + 8; return c; });
-    // the separator sits before the last item
     centers[centers.length - 1] += 11;
   };
   const magnify = x => {
@@ -417,7 +467,6 @@ void main(){
     });
     if (busy) raf = requestAnimationFrame(frame);
   };
-
   const rest = () => { clearTimeout(closeT); closeT = setTimeout(() => { if (!bar.matches(':focus-within')) { setState('idle'); magnify(null); } }, 260); };
   if (canHover) {
     addEventListener('pointermove', e => {
@@ -430,8 +479,7 @@ void main(){
       } else if (d <= 14 || (d <= 48 && Math.abs(e.clientX - innerWidth / 2) < 90)) {
         clearTimeout(closeT); setState('open'); magnify(e.clientX);
       } else if (d <= 170) {
-        const lean = Math.max(-44, Math.min(44, (e.clientX - innerWidth / 2) * 0.06));
-        bar.style.setProperty('--lean', lean.toFixed(1) + 'px');
+        const lean = clamp((e.clientX - innerWidth / 2) * 0.06, -44, 44);
         $('.pill', bar).style.setProperty('--lean', lean.toFixed(1) + 'px');
         setState('near');
       } else setState('idle');
@@ -442,16 +490,14 @@ void main(){
   bar.addEventListener('focusin', () => { clearTimeout(closeT); setState('open'); });
   bar.addEventListener('focusout', () => { if (!bar.matches(':focus-within') && state === 'open' && !dock.matches(':hover')) rest(); });
   addEventListener('resize', () => { centers = []; });
-  // the dock links should leave the dock alone once clicked with the mouse
   dock.addEventListener('click', e => { const a = e.target.closest('a'); if (a && a.matches('[data-sec]')) a.blur(); });
 
   /* active section: the running dot */
-  const secs = ['top', 'features', 'install'].map(id => document.getElementById(id));
   const lights = Object.fromEntries($$('[data-sec]').map(a => [a.dataset.sec, a]));
   const io = new IntersectionObserver(es => es.forEach(en => {
     if (en.isIntersecting) Object.entries(lights).forEach(([k, a]) => a.classList.toggle('on', k === en.target.id));
   }), { rootMargin: '-45% 0px -50% 0px' });
-  secs.forEach(s => io.observe(s));
+  ['top', 'features', 'install'].forEach(id => io.observe(document.getElementById(id)));
 
   /* once on load, the page shows what its menu does */
   if (canHover && !reduce) {
@@ -466,12 +512,11 @@ void main(){
         const e = p < .5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
         magnify(x0 + (x1 - x0) * e);
         if (p < 1) requestAnimationFrame(step);
-        else setTimeout(() => { if (!userMoved) { setState('idle'); magnify(null); setTimeout(() => { if (!everOpenedByUser()) hint.classList.add('show'); setTimeout(() => hint.classList.remove('show'), 5200); }, 500); } }, 500);
+        else setTimeout(() => { if (!userMoved) { setState('idle'); magnify(null); setTimeout(() => { if (!userMoved) hint.classList.add('show'); setTimeout(() => hint.classList.remove('show'), 5200); }, 500); } }, 500);
       };
       requestAnimationFrame(step);
     };
-    const everOpenedByUser = () => userMoved;
-    setTimeout(() => { if (!userMoved && document.fonts) document.fonts.ready.then(sweep); else sweep(); }, 1000);
+    setTimeout(() => { if (!userMoved) (document.fonts ? document.fonts.ready.then(sweep) : sweep()); }, 1400);
   }
 })();
 </script>
