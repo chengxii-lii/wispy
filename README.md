@@ -66,6 +66,13 @@ On first run wispy hides the Windows taskbar and takes over. Quit it from the ri
 
 **Requires** Windows 11 (built and tested there; Windows 10 is untested).
 
+## Code signing policy
+
+Releases are unsigned today. The project is set up for free code signing from [SignPath.io](https://signpath.io), with the certificate from [SignPath Foundation](https://signpath.org), and will be signed from the first release after approval ([how it's wired](docs/code-signing.md)).
+
+- **Team roles:** author, reviewer and approver are all [ThinkTrout](https://github.com/chengxii-lii).
+- **Privacy:** this program will not transfer any information to other networked systems unless specifically requested by the user or the person installing or operating it. Details are in the Privacy section below.
+
 ## Use it
 
 | Do this | To get |
