@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>tinybar</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+    <symbol id="i-wifi" viewBox="0 0 24 24"><path d="M12 20h.01"/><path d="M2 8.82a15 15 0 0 1 20 0"/><path d="M5 12.86a10 10 0 0 1 14 0"/><path d="M8.5 16.43a5 5 0 0 1 7 0"/></symbol>
+    <symbol id="i-vol" viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.8a4.6 4.6 0 0 1 0 6.4"/><path d="M18.6 5.7a9 9 0 0 1 0 12.6"/></symbol>
+    <symbol id="i-vol-low" viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.8a4.6 4.6 0 0 1 0 6.4"/></symbol>
+    <symbol id="i-mute" viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="m22 9-6 6"/><path d="m16 9 6 6"/></symbol>
+    <symbol id="i-bt" viewBox="0 0 24 24"><path d="m7 7 10 10-5 5V2l5 5L7 17"/></symbol>
+    <symbol id="i-plane" viewBox="0 0 24 24"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></symbol>
+    <symbol id="i-chev" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+    <symbol id="i-up" viewBox="0 0 24 24"><path d="m18 15-6-6-6 6"/></symbol>
+    <symbol id="i-headset" viewBox="0 0 24 24"><path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/></symbol>
+    <symbol id="i-pad" viewBox="0 0 24 24"><path d="M6 11h4M8 9v4M15 12h.01M18 10h.01"/><path d="M17.32 5H6.68a4 4 0 0 0-3.98 3.59l-.9 7.7A3 3 0 0 0 4.79 19.7c1.2 0 2.27-.73 2.71-1.85L8.5 15h7l1 2.85a2.9 2.9 0 0 0 2.71 1.85 3 3 0 0 0 2.99-3.41l-.9-7.7A4 4 0 0 0 17.32 5z"/></symbol>
+    <symbol id="i-speaker" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><circle cx="12" cy="14" r="4"/><path d="M12 6h.01"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-gamepad" viewBox="0 0 24 24"><path d="M6 11h4M8 9v4M15 12h.01M18 10h.01"/><path d="M17.32 5H6.68a4 4 0 0 0-3.98 3.59l-.9 7.7A3 3 0 0 0 4.79 19.7c1.2 0 2.27-.73 2.71-1.85L8.5 15h7l1 2.85a2.9 2.9 0 0 0 2.71 1.85 3 3 0 0 0 2.99-3.41l-.9-7.7A4 4 0 0 0 17.32 5z"/></symbol>
+    <symbol id="i-open" viewBox="0 0 24 24"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></symbol>
+    <symbol id="i-unpin" viewBox="0 0 24 24"><path d="M12 17v5"/><path d="M15 9.34V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H7.89"/><path d="m2 2 20 20"/><path d="M9 9v1.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h11"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+    <symbol id="i-term" viewBox="0 0 24 24"><path d="m4 17 6-6-6-6"/><path d="M12 19h8"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></symbol>
+    <symbol id="i-power" viewBox="0 0 24 24"><path d="M12 2v10"/><path d="M18.4 6.6a9 9 0 1 1-12.77.04"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></symbol>
+    <symbol id="i-keyboard" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></symbol>
+    <symbol id="i-paste" viewBox="0 0 24 24"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></symbol>
+    <symbol id="i-taskview" viewBox="0 0 24 24"><rect x="3" y="5" width="13" height="10" rx="2"/><path d="M8 19h11a2 2 0 0 0 2-2V9"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></symbol>
+    <symbol id="i-out" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></symbol>
+    <symbol id="i-restart" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+    <symbol id="i-gear" viewBox="0 0 24 24"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2z"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+    <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></symbol>
+    <symbol id="i-app" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/></symbol>
+  </defs>
+</svg>
+
+<div id="app" class="mode-dock">
+
+  <!-- the home bar: a thin pill that morphs into the dock -->
+  <div id="bar">
+    <div class="bar-fade">
+      <div class="bar-pill"></div>
+      <div class="bar-body"></div>
+      <div id="items"></div>
+    </div>
+  </div>
+
+  <div id="toasts"></div>
+
+  <!-- the lower row: search, hidden icons, input language, status, clock -->
+  <div id="row" class="hit">
+    <button id="taskview-btn" class="btn sq" aria-label="Task view"><svg class="ic"><use href="#i-taskview"/></svg></button>
+    <label id="search" class="field">
+      <svg class="ic"><use href="#i-search"/></svg>
+      <input id="q" type="text" placeholder="Search apps, settings, documents" spellcheck="false" autocomplete="off">
+    </label>
+    <button id="tray-btn" class="btn sq" aria-label="Show hidden icons"><svg class="ic"><use href="#i-up"/></svg></button>
+    <button id="lang-btn" class="btn sq" aria-label="Input language"><b id="lang-short">ENG</b></button>
+    <button id="status" class="btn" aria-label="Quick settings">
+      <svg class="ic" id="st-wifi"><use href="#i-wifi"/></svg>
+      <svg class="ic" id="st-vol"><use href="#i-vol"/></svg>
+      <span class="batt"><svg class="ic" id="st-batt" viewBox="0 0 24 24"></svg><b id="st-pct">100%</b></span>
+    </button>
+    <button id="clock" class="btn" aria-label="Notifications and calendar">
+      <span id="clk-time">1:05 AM</span>
+      <span id="clk-date">10/19/2026</span>
+      <span id="clk-dot"></span>
+      <svg class="ic" id="clk-dnd"><use href="#i-moon"/></svg>
+    </button>
+    <button id="desk-btn" aria-label="Show desktop"></button>
+  </div>
+
+  <!-- panels -->
+  <section id="p-search" class="panel hit" aria-label="Search results"></section>
+
+  <section id="p-tray" class="panel hit" aria-label="Hidden icons"><div id="tray-grid"></div></section>
+
+  <section id="p-lang" class="panel hit" aria-label="Input language"><div class="group-label first">Keyboard</div><div id="lang-list"></div><button class="more" data-uri="ms-settings:regionlanguage"><span>More keyboard settings</span><svg class="ic"><use href="#i-chev"/></svg></button></section>
+
+  <section id="p-quick" class="panel hit" aria-label="Quick settings">
+   <div class="qwrap">
+    <div class="page" id="q-main">
+      <div class="qs-grid">
+        <div class="qs" id="t-wifi">
+          <div class="qs-btn"><button class="qs-main" data-act="wifi" aria-label="Wi-Fi"><svg class="ic"><use href="#i-wifi"/></svg></button><button class="qs-go" data-act="page-wifi" aria-label="Wi-Fi networks"><svg class="ic"><use href="#i-chev"/></svg></button></div>
+          <span class="qs-label" id="t-wifi-sub">Wi-Fi</span>
+        </div>
+        <div class="qs" id="t-bt">
+          <div class="qs-btn"><button class="qs-main" data-act="bt" aria-label="Bluetooth"><svg class="ic"><use href="#i-bt"/></svg></button><button class="qs-go" data-act="page-bt" aria-label="Bluetooth devices"><svg class="ic"><use href="#i-chev"/></svg></button></div>
+          <span class="qs-label" id="t-bt-sub">Bluetooth</span>
+        </div>
+      </div>
+      <div class="slider-row" id="s-vol">
+        <button class="slider-ic" data-act="mute" aria-label="Mute"><svg class="ic" id="s-vol-ic"><use href="#i-vol"/></svg></button>
+        <input type="range" min="0" max="100" value="50" id="r-vol" aria-label="Volume">
+        <span class="slider-val" id="v-vol">50</span>
+        <button class="slider-go" data-act="page-sound" aria-label="Sound output and volume mixer"><svg class="ic"><use href="#i-chev"/></svg></button>
+      </div>
+      <div class="q-foot">
+        <div class="q-batt"><svg class="ic" id="q-batt-ic" viewBox="0 0 24 24"></svg><span id="q-batt-text">100%</span></div>
+        <span class="q-btns"><button class="icon-btn" data-act="power" aria-label="Power"><svg class="ic"><use href="#i-power"/></svg></button><button class="icon-btn" data-act="settings" aria-label="All Windows settings"><svg class="ic"><use href="#i-gear"/></svg></button></span>
+      </div>
+    </div>
+
+    <div class="page sub" id="q-wifi">
+      <div class="page-head">
+        <button class="back" data-act="back" aria-label="Back"><svg class="ic"><use href="#i-back"/></svg></button>
+        <b>Wi-Fi</b>
+        <span class="switch" id="sw-wifi" role="switch" aria-label="Wi-Fi"></span>
+      </div>
+      <div class="page-body" id="wifi-list"></div>
+      <button class="more" data-act="more" data-uri="ms-settings:network-wifi"><span>More Wi-Fi settings</span><svg class="ic"><use href="#i-chev"/></svg></button>
+    </div>
+
+    <div class="page sub" id="q-bt">
+      <div class="page-head">
+        <button class="back" data-act="back" aria-label="Back"><svg class="ic"><use href="#i-back"/></svg></button>
+        <b>Bluetooth</b>
+        <span class="switch" id="sw-bt" role="switch" aria-label="Bluetooth"></span>
+      </div>
+      <div class="page-body" id="bt-list"></div>
+      <button class="more" data-act="more" data-uri="ms-settings:bluetooth"><span>More Bluetooth settings</span><svg class="ic"><use href="#i-chev"/></svg></button>
+    </div>
+
+    <div class="page sub" id="q-sound">
+      <div class="page-head">
+        <button class="back" data-act="back" aria-label="Back"><svg class="ic"><use href="#i-back"/></svg></button>
+        <b>Sound</b>
+      </div>
+      <div class="page-body">
+        <div class="slider-row big" id="s-vol2">
+          <button class="slider-ic" data-act="mute" aria-label="Mute"><svg class="ic" id="s-vol2-ic"><use href="#i-vol"/></svg></button>
+          <input type="range" min="0" max="100" value="50" id="r-vol2" aria-label="Master volume">
+          <span class="slider-val" id="v-vol2">50</span>
+        </div>
+        <div class="group-label">Output</div>
+        <div id="out-list"></div>
+        <div class="group-label">Volume mixer</div>
+        <div id="mix-list"></div>
+      </div>
+      <button class="more" data-act="more" data-uri="ms-settings:apps-volume"><span>More volume settings</span><svg class="ic"><use href="#i-chev"/></svg></button>
+    </div>
+   </div>
+  </section>
+
+  <section id="p-settings" class="panel hit" aria-label="tinybar settings">
+    <div class="page-head"><b>tinybar settings</b><span class="ver">v1.0</span></div>
+    <div id="set-body"></div>
+  </section>
+
+  <section id="p-menu" class="panel hit" aria-label="tinybar menu">
+    <button class="mi" data-act="login"><span>Launch at login</span><span class="switch" id="sw-login" role="switch"></span></button>
+    <button class="mi" data-act="taskmgr"><span>Task Manager</span></button>
+    <button class="mi" data-act="quit"><span>Quit tinybar<i>Brings back the Windows taskbar</i></span></button>
+  </section>
+
+  <section id="p-cal" class="panel hit" aria-label="Notifications and calendar">
+    <div class="nc">
+      <div class="nc-head"><b>Notifications</b><div class="nc-tools"><label class="dnd"><svg class="ic"><use href="#i-moon"/></svg><span>Do not disturb</span><span class="switch sm" id="sw-dnd" role="switch" aria-label="Do not disturb"></span></label><button class="link" data-act="clear-all">Clear all</button></div></div>
+      <div id="nc-list"></div>
+    </div>
+    <div class="cal">
+      <div class="cal-head">
+        <div><b id="cal-title">October 2026</b></div>
+        <div class="cal-nav">
+          <button class="icon-btn" data-act="prev" aria-label="Previous month"><svg class="ic"><use href="#i-back"/></svg></button>
+          <button class="icon-btn" data-act="next" aria-label="Next month"><svg class="ic"><use href="#i-chev"/></svg></button>
+        </div>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+    </div>
+  </section>
+
+</div>
+
+<script>if (!window.tb) document.write('<script src="mock.js"><\/script>');</script>
+<script src="app.js"></script>
+</body>
+</html>
