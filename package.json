@@ -1,0 +1,44 @@
+{
+  "name": "tinybar",
+  "productName": "tinybar",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A phone-style home bar that replaces the Windows taskbar: it rises to meet your cursor, opens into a dock, and holds search, quick settings and notifications.",
+  "keywords": [
+    "windows",
+    "windows-11",
+    "taskbar",
+    "dock",
+    "launcher",
+    "electron",
+    "productivity",
+    "customization"
+  ],
+  "homepage": "https://github.com/chengxii-lii/tinybar#readme",
+  "bugs": {
+    "url": "https://github.com/chengxii-lii/tinybar/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chengxii-lii/tinybar.git"
+  },
+  "author": "ThinkTrout",
+  "license": "MIT",
+  "main": "main.js",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "electron .",
+    "test": "node scripts/test/check.mjs",
+    "helper": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-helper.ps1",
+    "pack": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/pack.ps1",
+    "zip": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/make-zip.ps1",
+    "install-app": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1",
+    "art": "npm --prefix scripts/art install --no-audit --no-fund && node scripts/art/render.mjs"
+  },
+  "devDependencies": {
+    "@electron/packager": "^20.3.0",
+    "electron": "^44.9.0"
+  }
+}

@@ -1,0 +1,11 @@
+node_modules/
+dist/
+release/
+helper/*.exe
+*.zip
+*.log
+.DS_Store
+Thumbs.db
+# local planning notes, with personal paths in them
+.claude/*
+!.claude/ship.md
