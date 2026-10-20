@@ -171,11 +171,11 @@ body.dark-zone .pill{background:#fff;opacity:.65}
       <p class="tag rv" style="--d:.45s">Your taskbar, as a home bar.</p>
       <p class="sub rv" style="--d:.55s">A thin pill that rises to meet your cursor and opens into a dock.</p>
       <div class="cta rv" style="--d:.7s">
-        <a class="btn" data-dl data-mag href="https://github.com/chengxii-lii/wispy/releases/download/v1.0.0/wispy-v1.0.0-win-x64.zip">
+        <a class="btn" data-dl data-mag href="https://github.com/chengxii-lii/wispy/releases/latest">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m0 0-5-5m5 5 5-5M5 20h14"/></svg>
           Download for Windows
         </a>
-        <p class="meta" data-meta>Free and open source. Windows 11, <span data-ver>v1.0.0</span>, <span data-size>151 MB</span>.</p>
+        <p class="meta" data-meta>Free and open source. Windows 11, <span data-ver>v1.0.0</span>, <span data-size>110 MB</span>.</p>
       </div>
     </div>
   </header>
@@ -197,9 +197,9 @@ body.dark-zone .pill{background:#fff;opacity:.65}
   <section id="install">
     <div class="wrap">
       <h2 class="rv">Try it in a minute.</h2>
-      <p class="lead rv" style="--d:.1s">Unzip, double-click <b>Install wispy.cmd</b>, then move to the bottom edge. Quit whenever you like and your taskbar comes back exactly as it was.</p>
+      <p class="lead rv" style="--d:.1s">Run the installer, then move to the bottom edge. Quit whenever you like and your taskbar comes back exactly as it was.</p>
       <div class="final rv" style="--d:.2s">
-        <a class="btn" data-dl data-mag href="https://github.com/chengxii-lii/wispy/releases/download/v1.0.0/wispy-v1.0.0-win-x64.zip">
+        <a class="btn" data-dl data-mag href="https://github.com/chengxii-lii/wispy/releases/latest">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m0 0-5-5m5 5 5-5M5 20h14"/></svg>
           Download wispy <span data-ver>v1.0.0</span>
         </a>
@@ -239,7 +239,7 @@ body.dark-zone .pill{background:#fff;opacity:.65}
     <a class="di" href="#install" data-sec="install"><span class="tile"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8.2 12 4l8 4.2v7.6L12 20l-8-4.2zM4 8.2l8 4.3 8-4.3M12 12.5V20"/></svg></span><span class="lbl">Install</span><i class="dot"></i></a>
     <a class="di gh" href="https://github.com/chengxii-lii/wispy"><span class="tile"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .3a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 0-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.7 1.7.2 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .3"/></svg></span><span class="lbl">GitHub</span><i class="dot"></i></a>
     <span class="sep" aria-hidden="true"></span>
-    <a class="di get" data-dl href="https://github.com/chengxii-lii/wispy/releases/download/v1.0.0/wispy-v1.0.0-win-x64.zip"><span class="tile"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0-5-5m5 5 5-5M5 20h14"/></svg></span><span class="lbl">Download</span><i class="dot"></i></a>
+    <a class="di get" data-dl href="https://github.com/chengxii-lii/wispy/releases/latest"><span class="tile"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0-5-5m5 5 5-5M5 20h14"/></svg></span><span class="lbl">Download</span><i class="dot"></i></a>
   </div>
 </nav>
 
@@ -418,7 +418,7 @@ void main(){
   fetch(`https://api.github.com/repos/${REPO}/releases/latest`, { headers: { Accept: 'application/vnd.github+json' } })
     .then(r => r.ok ? r.json() : Promise.reject())
     .then(rel => {
-      const zip = (rel.assets || []).find(x => /-win-x64\.zip$/.test(x.name));
+      const zip = (rel.assets || []).find(x => /setup\.exe$/.test(x.name)) || (rel.assets || []).find(x => /-win-x64\.zip$/.test(x.name));
       if (!zip) return;
       dls.forEach(a => a.href = zip.browser_download_url);
       $$('[data-ver]').forEach(e => e.textContent = rel.tag_name);
@@ -430,7 +430,7 @@ void main(){
     metaOriginal[0] = metas[0].innerHTML;
   }
   dls.forEach(a => a.addEventListener('click', () => {
-    metas.forEach(m => m.textContent = 'Download started. Unzip it, then double-click Install wispy.cmd.');
+    metas.forEach(m => m.textContent = 'Download started. Run it and follow the prompts.');
     clearTimeout(a._t);
     a._t = setTimeout(() => metas.forEach((m, i) => m.innerHTML = metaOriginal[i]), 9000);
   }));

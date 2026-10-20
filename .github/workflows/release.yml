@@ -1,4 +1,4 @@
-# Push a tag like v1.0.0 and this builds the release zip and opens a DRAFT release with the changelog entry
+# Push a tag like v1.0.0 and this builds the installer and opens a DRAFT release with the changelog entry
 # as its notes, so you can read it over and press Publish yourself.
 name: Release
 
@@ -30,7 +30,11 @@ jobs:
       - run: npm test
       - run: npm run helper
       - run: npm run pack
-      - run: npm run zip
+      - name: Make sure Inno Setup is there
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) { choco install innosetup -y --no-progress }
+      - run: npm run installer
 
       - name: Draft the release
         shell: bash
@@ -38,5 +42,5 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           node scripts/release-notes.mjs "${GITHUB_REF_NAME}" > notes.md
-          gh release create "${GITHUB_REF_NAME}" release/*.zip release/*.sha256 \
+          gh release create "${GITHUB_REF_NAME}" release/*.exe release/*.sha256 \
             --draft --title "wispy ${GITHUB_REF_NAME}" --notes-file notes.md

@@ -5,6 +5,7 @@
 <br>
 
 [![Version](https://img.shields.io/badge/version-1.0.0-8fa3ba?style=flat-square)](https://github.com/chengxii-lii/wispy/releases)
+[![Website](https://img.shields.io/badge/website-chengxii--lii.github.io%2Fwispy-8fa3ba?style=flat-square)](https://chengxii-lii.github.io/wispy/)
 [![Windows 11](https://img.shields.io/badge/Windows-11-8fa3ba?style=flat-square)](#install)
 [![License: MIT](https://img.shields.io/badge/license-MIT-8fa3ba?style=flat-square)](LICENSE)
 [![CI](https://img.shields.io/github/actions/workflow/status/chengxii-lii/wispy/ci.yml?style=flat-square&label=CI)](https://github.com/chengxii-lii/wispy/actions/workflows/ci.yml)
@@ -57,8 +58,7 @@ A thin pill that rises to meet your cursor, opens into a dock, and holds search,
 
 ## Install
 
-1. Download **wispy-v1.0.0-win-x64.zip** from the [latest release](https://github.com/chengxii-lii/wispy/releases/latest) and unzip it.
-2. Double-click **Install wispy.cmd**. (No admin rights needed. Prefer to look first? Run `wispy\wispy.exe` straight from the folder; nothing is installed.)
+Download **wispy-setup.exe** from the [latest release](https://github.com/chengxii-lii/wispy/releases/latest) (or from [the website](https://chengxii-lii.github.io/wispy/)) and run it. No admin rights needed.
 
 Windows may say the app is unrecognised, because wispy isn't code-signed yet: choose **More info**, then **Run anyway**. Its code is all here, and the helper is a few readable C# files ([`helper/`](helper)).
 
@@ -100,9 +100,9 @@ Right-click the empty bar and choose **wispy settings**. Everything saves as you
 <summary><b>If something goes wrong</b></summary>
 <br>
 
-wispy puts the taskbar back whenever it exits, and when its window crashes. The one case it can't cover is both of its processes being force-killed at the same instant (some "end task" tools do that). If the taskbar is ever missing, run `restore-taskbar.ps1` (it's in the zip and next to the installed app), or restart Windows Explorer from Task Manager. A crash log is kept at `%APPDATA%\wispy\wispy.log`.
+wispy puts the taskbar back whenever it exits, and when its window crashes. The one case it can't cover is both of its processes being force-killed at the same instant (some "end task" tools do that). If the taskbar is ever missing, run `restore-taskbar.ps1` (it's next to the installed app, in `%LOCALAPPDATA%\Programs\wispy`), or restart Windows Explorer from Task Manager. A crash log is kept at `%APPDATA%\wispy\wispy.log`.
 
-**Uninstall:** run `uninstall.ps1` (add `-RemoveData` to delete your settings too).
+**Uninstall:** Settings, Apps, Installed apps, wispy. It offers to delete your settings too.
 
 </details>
 
@@ -137,7 +137,7 @@ npm run helper    # build the native helper
 npm start         # run from source
 npm test          # fast checks: syntax, ids, IPC, settings
 npm run pack      # package the app into dist/
-npm run zip       # build the release zip
+npm run installer # build the release installer (needs Inno Setup 6)
 npm run art       # re-render this README's art
 ```
 

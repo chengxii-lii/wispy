@@ -14,7 +14,7 @@
     "productivity",
     "customization"
   ],
-  "homepage": "https://github.com/chengxii-lii/wispy#readme",
+  "homepage": "https://chengxii-lii.github.io/wispy/",
   "bugs": {
     "url": "https://github.com/chengxii-lii/wispy/issues"
   },
@@ -33,7 +33,7 @@
     "test": "node scripts/test/check.mjs",
     "helper": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-helper.ps1",
     "pack": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/pack.ps1",
-    "zip": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/make-zip.ps1",
+    "installer": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/make-installer.ps1",
     "install-app": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1",
     "art": "npm --prefix scripts/art install --no-audit --no-fund && node scripts/art/render.mjs"
   },
