@@ -39,4 +39,4 @@ jobs:
         run: |
           node scripts/release-notes.mjs "${GITHUB_REF_NAME}" > notes.md
           gh release create "${GITHUB_REF_NAME}" release/*.zip release/*.sha256 \
-            --draft --title "neon ${GITHUB_REF_NAME}" --notes-file notes.md
+            --draft --title "wisp ${GITHUB_REF_NAME}" --notes-file notes.md

@@ -477,8 +477,6 @@ button[disabled], .pill-btn[disabled], .qs.busy button { cursor: default; }
 #row.no-tray #tray-btn, #row.no-lang #lang-btn, #row.no-taskview #taskview-btn, #row.no-desk #desk-btn { display: none !important; }
 #row.no-pct #st-pct { display: none; }
 #row.no-date #clk-date { display: none; }
-#desk-btn { width: 12px; height: 44px; border-radius: 12px; flex: none; margin-left: -2px; background: var(--sheen), var(--surface); box-shadow: var(--edge), var(--shadow); transition: background .15s, width .2s var(--ease); }
-#desk-btn:hover { background: var(--accent); width: 16px; }
 #clock .ic#clk-dnd { display: none; position: absolute; left: 11px; top: 50%; margin-top: -7px; width: 14px; height: 14px; opacity: .7; }
 #clock.dnd { padding-left: 32px; }
 #clock.dnd #clk-dnd { display: block; }

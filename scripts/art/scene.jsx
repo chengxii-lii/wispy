@@ -1,4 +1,4 @@
-// The backdrop for neon's README art: a ShaderGradient (shadergradient.co), full screen. It is the "wallpaper"
+// The backdrop for wisp's README art: a ShaderGradient (shadergradient.co), full screen. It is the "wallpaper"
 // the real UI is photographed on. URL options: t (moment in the animation), c1/c2/c3 (colours), b (brightness),
 // grain=off, d (camera distance), s (wave strength), type (plane | waterPlane | sphere).
 import React from 'react';

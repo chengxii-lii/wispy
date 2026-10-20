@@ -1,6 +1,6 @@
-# neon: quality-of-life ideas
+# wisp: quality-of-life ideas
 
-Twenty ideas, then the ten that made the cut. The filter was one question: **would someone who replaces their taskbar with neon hit a wall without it?** Nice-to-haves lost to needs.
+Twenty ideas, then the ten that made the cut. The filter was one question: **would someone who replaces their taskbar with wisp hit a wall without it?** Nice-to-haves lost to needs.
 
 ## The 20
 
@@ -14,13 +14,13 @@ Twenty ideas, then the ten that made the cut. The filter was one question: **wou
 | 6 | Monitor choice: primary, a specific display, or follow the cursor | **Need.** Multi-monitor users get a bar on the wrong screen otherwise |
 | 7 | Clock and row layout: 12/24-hour, seconds, date format, hide buttons | **Need.** Locale and taste differ |
 | 8 | Drag to reorder pinned apps | **Need.** Order comes from Windows today and can't be changed here |
-| 9 | Do Not Disturb | **Need.** neon mutes Windows' banners, so it has to offer its own mute |
+| 9 | Do Not Disturb | **Need.** wisp mutes Windows' banners, so it has to offer its own mute |
 | 10 | Window picker for apps with several windows | **Need.** Browsers and Explorer; clicking only cycles |
 | 11 | Window thumbnails on hover | Nice. Heavy (DWM thumbnail API), the picker covers the need |
 | 12 | Jump lists and recent files in the app menu | Nice. Windows has it; needs per-app shell plumbing |
 | 13 | Now-playing media controls in the bar | Nice. Neat, but not a wall |
 | 14 | Calculator, unit and currency answers in search | Nice. Search is for launching |
-| 15 | Clipboard history | Nice. Windows already has Win+V (which neon leaves alone) |
+| 15 | Clipboard history | Nice. Windows already has Win+V (which wisp leaves alone) |
 | 16 | Weather and calendar events in the clock panel | Nice. Needs accounts or network calls |
 | 17 | App badges and progress on dock icons | Nice. Needs taskbar-list COM hooks |
 | 18 | Per-app rules (hide in games, ignore apps) | Nice. Fullscreen detection already covers the common case |

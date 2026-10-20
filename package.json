@@ -1,6 +1,6 @@
 {
-  "name": "neon",
-  "productName": "neon",
+  "name": "wisp",
+  "productName": "wisp",
   "version": "1.0.0",
   "private": true,
   "description": "A phone-style home bar that replaces the Windows taskbar: it rises to meet your cursor, opens into a dock, and holds search, quick settings and notifications.",
@@ -14,13 +14,13 @@
     "productivity",
     "customization"
   ],
-  "homepage": "https://github.com/chengxii-lii/neon#readme",
+  "homepage": "https://github.com/chengxii-lii/wisp#readme",
   "bugs": {
-    "url": "https://github.com/chengxii-lii/neon/issues"
+    "url": "https://github.com/chengxii-lii/wisp/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/chengxii-lii/neon.git"
+    "url": "git+https://github.com/chengxii-lii/wisp.git"
   },
   "author": "ThinkTrout",
   "license": "MIT",

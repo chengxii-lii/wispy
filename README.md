@@ -1,13 +1,13 @@
 <div align="center">
 
-<img src=".github/assets/banner.jpg" alt="neon: your taskbar, as a home bar" width="100%">
+<img src=".github/assets/banner.jpg" alt="wisp: your taskbar, as a home bar" width="100%">
 
 <br>
 
-[![Version](https://img.shields.io/badge/version-1.0.0-ff7a1a?style=flat-square)](https://github.com/chengxii-lii/neon/releases)
+[![Version](https://img.shields.io/badge/version-1.0.0-ff7a1a?style=flat-square)](https://github.com/chengxii-lii/wisp/releases)
 [![Windows 11](https://img.shields.io/badge/Windows-11-ff7a1a?style=flat-square)](#install)
 [![License: MIT](https://img.shields.io/badge/license-MIT-ff7a1a?style=flat-square)](LICENSE)
-[![CI](https://img.shields.io/github/actions/workflow/status/chengxii-lii/neon/ci.yml?style=flat-square&label=CI)](https://github.com/chengxii-lii/neon/actions/workflows/ci.yml)
+[![CI](https://img.shields.io/github/actions/workflow/status/chengxii-lii/wisp/ci.yml?style=flat-square&label=CI)](https://github.com/chengxii-lii/wisp/actions/workflows/ci.yml)
 
 **Your Windows taskbar, as a phone-style home bar.**<br>
 A thin pill that rises to meet your cursor, opens into a dock, and holds search, quick settings and notifications.
@@ -16,7 +16,7 @@ A thin pill that rises to meet your cursor, opens into a dock, and holds search,
 
 <br>
 
-<img src=".github/assets/demo.gif" alt="neon in action: the pill rises as the cursor nears the bottom, the dock opens, icons magnify, then the Windows key opens search and quick settings" width="100%">
+<img src=".github/assets/demo.gif" alt="wisp in action: the pill rises as the cursor nears the bottom, the dock opens, icons magnify, then the Windows key opens search and quick settings" width="100%">
 
 <br>
 
@@ -43,11 +43,11 @@ A thin pill that rises to meet your cursor, opens into a dock, and holds search,
 </tr>
 <tr>
 <td width="50%" valign="top">
-<img src=".github/assets/settings.jpg" alt="neon's settings: theme, accent colour, glass, icon size, magnification, behaviour"><br>
+<img src=".github/assets/settings.jpg" alt="wisp's settings: theme, accent colour, glass, icon size, magnification, behaviour"><br>
 <b>Make it yours.</b> Theme, accent, glass, icon size, magnification, how close the cursor must get, a delay, one screen or all of them, 24-hour clock, and which buttons show.
 </td>
 <td width="50%" valign="top">
-<img src=".github/assets/light.jpg" alt="neon in its light theme"><br>
+<img src=".github/assets/light.jpg" alt="wisp in its light theme"><br>
 <b>Light or dark,</b> following Windows or your choice. Everything is drawn from one set of tokens, so a new accent colour recolours the lot.
 </td>
 </tr>
@@ -57,12 +57,12 @@ A thin pill that rises to meet your cursor, opens into a dock, and holds search,
 
 ## Install
 
-1. Download **neon-v1.0.0-win-x64.zip** from the [latest release](https://github.com/chengxii-lii/neon/releases/latest) and unzip it.
-2. Double-click **Install neon.cmd**. (No admin rights needed. Prefer to look first? Run `neon\neon.exe` straight from the folder; nothing is installed.)
+1. Download **wisp-v1.0.0-win-x64.zip** from the [latest release](https://github.com/chengxii-lii/wisp/releases/latest) and unzip it.
+2. Double-click **Install wisp.cmd**. (No admin rights needed. Prefer to look first? Run `wisp\wisp.exe` straight from the folder; nothing is installed.)
 
-Windows may say the app is unrecognised, because neon isn't code-signed yet: choose **More info**, then **Run anyway**. Its code is all here, and the helper is a few readable C# files ([`helper/`](helper)).
+Windows may say the app is unrecognised, because wisp isn't code-signed yet: choose **More info**, then **Run anyway**. Its code is all here, and the helper is a few readable C# files ([`helper/`](helper)).
 
-On first run neon hides the Windows taskbar and takes over. Quit it from the right-click menu and the taskbar comes back, exactly as it was.
+On first run wisp hides the Windows taskbar and takes over. Quit it from the right-click menu and the taskbar comes back, exactly as it was.
 
 **Requires** Windows 11 (built and tested there; Windows 10 is untested).
 
@@ -72,16 +72,16 @@ On first run neon hides the Windows taskbar and takes over. Quit it from the rig
 | :-- | :-- |
 | Move toward the bottom edge | A pill fades in and leans toward your cursor |
 | Touch the bottom edge | The dock opens, with search, status and the clock below it |
-| <kbd>Win</kbd> | Open neon with search ready (tap again to close). Set it to open Start instead in Settings |
+| <kbd>Win</kbd> | Open wisp with search ready (tap again to close). Set it to open Start instead in Settings |
 | <kbd>Enter</kbd> · <kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>Enter</kbd> | Open the result · run it as administrator |
 | Click an app with several windows | Pick the window |
 | Drag a pinned app | Reorder the dock |
-| Right-click anything | The menu you'd expect there. Right-click empty bar for **neon settings** |
+| Right-click anything | The menu you'd expect there. Right-click empty bar for **wisp settings** |
 | <kbd>Esc</kbd> | Close |
 
 ## Make it yours
 
-Right-click the empty bar and choose **neon settings**. Everything saves as you change it, and **Restore defaults** is one click. Settings live in `%APPDATA%\neon\config.json`.
+Right-click the empty bar and choose **wisp settings**. Everything saves as you change it, and **Restore defaults** is one click. Settings live in `%APPDATA%\wisp\config.json`.
 
 <details>
 <summary><b>How it works</b></summary>
@@ -90,9 +90,9 @@ Right-click the empty bar and choose **neon settings**. Everything saves as you 
 - **One window, mostly invisible.** An Electron window sits at the bottom centre of your screen, transparent and click-through everywhere except the pieces you can see, so it never blocks the apps underneath.
 - **A native helper does what a web page can't.** A small C# program, built with the compiler that ships with Windows, hides the real taskbar, listens for the Windows key, lists your windows, extracts high-resolution icons, switches sound outputs and keyboard languages, relays tray icons, and talks to the Bluetooth audio driver. The two halves talk over JSON lines.
 - **Two cursor zones, spring physics.** The pill, the dock and every panel move on springs, so interruptions look natural instead of snapping.
-- **Your taskbar, read honestly.** Pins come from the same places Windows keeps them, in the order the taskbar shows. neon's own pin changes are layered on top and never touch Windows' list.
-- **Notifications** are read from the notification database Windows already keeps, shown by neon, and Windows' own banners are muted per app while it runs (restored when you quit).
-- **Hidden icons.** neon registers its own tray window, forwards every message to Explorer's real one unchanged, and relays your clicks, so nothing is lost if you quit.
+- **Your taskbar, read honestly.** Pins come from the same places Windows keeps them, in the order the taskbar shows. wisp's own pin changes are layered on top and never touch Windows' list.
+- **Notifications** are read from the notification database Windows already keeps, shown by wisp, and Windows' own banners are muted per app while it runs (restored when you quit).
+- **Hidden icons.** wisp registers its own tray window, forwards every message to Explorer's real one unchanged, and relays your clicks, so nothing is lost if you quit.
 
 </details>
 
@@ -100,7 +100,7 @@ Right-click the empty bar and choose **neon settings**. Everything saves as you 
 <summary><b>If something goes wrong</b></summary>
 <br>
 
-neon puts the taskbar back whenever it exits, and when its window crashes. The one case it can't cover is both of its processes being force-killed at the same instant (some "end task" tools do that). If the taskbar is ever missing, run `restore-taskbar.ps1` (it's in the zip and next to the installed app), or restart Windows Explorer from Task Manager. A crash log is kept at `%APPDATA%\neon\neon.log`.
+wisp puts the taskbar back whenever it exits, and when its window crashes. The one case it can't cover is both of its processes being force-killed at the same instant (some "end task" tools do that). If the taskbar is ever missing, run `restore-taskbar.ps1` (it's in the zip and next to the installed app), or restart Windows Explorer from Task Manager. A crash log is kept at `%APPDATA%\wisp\wisp.log`.
 
 **Uninstall:** run `uninstall.ps1` (add `-RemoveData` to delete your settings too).
 
@@ -110,7 +110,7 @@ neon puts the taskbar back whenever it exits, and when its window crashes. The o
 <summary><b>Privacy</b></summary>
 <br>
 
-No analytics, accounts or servers. Everything stays on your PC. The only time neon touches the internet is when you pick a web search, which opens your browser. Your notification list is stored locally and clears itself at the end of the day.
+No analytics, accounts or servers. Everything stays on your PC. The only time wisp touches the internet is when you pick a web search, which opens your browser. Your notification list is stored locally and clears itself at the end of the day.
 
 </details>
 

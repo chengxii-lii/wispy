@@ -35,7 +35,7 @@
   };
   const dock = [
     { id: 'pin:files', name: 'Files', pinned: true, icon: ICONS.files, running: 2, active: false },
-    { id: 'pin:browser', name: 'Browser', pinned: true, icon: ICONS.browser, running: 3, active: true, wins: [{ hwnd: 1, title: 'neon · GitHub' }, { hwnd: 2, title: 'Release notes' }, { hwnd: 3, title: 'New tab' }] },
+    { id: 'pin:browser', name: 'Browser', pinned: true, icon: ICONS.browser, running: 3, active: true, wins: [{ hwnd: 1, title: 'wisp · GitHub' }, { hwnd: 2, title: 'Release notes' }, { hwnd: 3, title: 'New tab' }] },
     { id: 'pin:mail', name: 'Mail', pinned: true, icon: ICONS.mail, running: 0, active: false },
     { id: 'pin:messages', name: 'Messages', pinned: true, icon: ICONS.messages, running: 1, active: false },
     { id: 'pin:music', name: 'Music', pinned: true, icon: ICONS.music, running: 1, active: false },

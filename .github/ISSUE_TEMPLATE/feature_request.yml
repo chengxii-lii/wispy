@@ -1,5 +1,5 @@
 name: Feature request
-description: An idea that would make neon better
+description: An idea that would make wisp better
 labels: [enhancement]
 body:
   - type: textarea
@@ -12,7 +12,7 @@ body:
   - type: textarea
     id: idea
     attributes:
-      label: What would you like neon to do?
+      label: What would you like wisp to do?
   - type: textarea
     id: alternatives
     attributes:

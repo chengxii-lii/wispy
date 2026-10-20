@@ -1,7 +1,7 @@
 {
-  "name": "neon-art",
+  "name": "wisp-art",
   "private": true,
-  "description": "Renders neon's README art: a ShaderGradient backdrop with the real UI on top.",
+  "description": "Renders wisp's README art: a ShaderGradient backdrop with the real UI on top.",
   "dependencies": {
     "@react-three/fiber": "^8.18.0",
     "@shadergradient/react": "2.4.20",

@@ -1,7 +1,7 @@
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 $csc = "$env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
-$out = Join-Path $root 'helper\neon-helper.exe'
+$out = Join-Path $root 'helper\wisp-helper.exe'
 & $csc /nologo /optimize+ /platform:x64 /target:winexe "/out:$out" `
   /r:System.dll /r:System.Core.dll /r:System.Drawing.dll /r:System.Windows.Forms.dll `
   /r:System.Data.dll /r:System.Web.Extensions.dll `

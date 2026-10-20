@@ -1,4 +1,4 @@
-// Renders neon's README art into .github/assets: a ShaderGradient banner, screenshots of the real UI over
+// Renders wisp's README art into .github/assets: a ShaderGradient banner, screenshots of the real UI over
 // the gradient, a social card and a demo GIF. Run with `npm run art` (installs this folder's dependencies first).
 //
 //   node scripts/art/render.mjs [banner] [shots] [social] [demo]   (default: all)
@@ -48,7 +48,7 @@ const UI = 'art.ui';
 // open a page, wait for the gradient and the UI to be ready
 async function open(query, { width = 1440, height = 820, scale = WIDTH / 1440, scheme = 'dark' } = {}) {
   const p = await b.page(scene(query), { width, height, scale, scheme });
-  await p.until(`${UI} && ${UI}.__neon && ${UI}.document.querySelectorAll('#items .item').length > 0`);
+  await p.until(`${UI} && ${UI}.__wisp && ${UI}.document.querySelectorAll('#items .item').length > 0`);
   await p.eval('document.fonts.ready.then(() => 1)');
   await sleep(4200); // the gradient needs a moment to draw
   return p;
@@ -56,7 +56,7 @@ async function open(query, { width = 1440, height = 820, scale = WIDTH / 1440, s
 const ui = (p, js) => p.eval(`(() => { const u = ${UI}; ${js} })()`);
 // let everything finish: promises and timers in real time, then physics and animations by an exact amount
 const settle = async (p, ms = 1400) => { await sleep(450); await p.eval(`art.step(${ms}); 1`); await sleep(250); await p.eval('art.step(80); 1'); };
-async function dock(p) { await ui(p, 'u.__neon.openBar(true); return 1'); await settle(p); }
+async function dock(p) { await ui(p, 'u.__wisp.openBar(true); return 1'); await settle(p); }
 async function overItem(p, n) {
   const [x, y] = await p.eval(`art.itemCentre(${n})`);
   await p.eval(`art.cursor(${x}, ${y}); 1`);
@@ -120,7 +120,7 @@ try {
 
     p = await open(base + '&t=1.8');
     await dock(p);
-    await ui(p, 'u.__neon.setMode("settings"); return 1'); await settle(p);
+    await ui(p, 'u.__wisp.setMode("settings"); return 1'); await settle(p);
     await hide(p);
     await p.screenshot(path.join(OUT, 'settings.jpg')); console.log('settings.jpg');
     await p.closeTarget();
@@ -188,7 +188,7 @@ async function demo() {
   }
   await key('Escape'); await hold(360);
   await key('Escape'); await hold(500);
-  await ui(p, 'u.__neon.openBar(true); return 1'); await hold(700);
+  await ui(p, 'u.__wisp.openBar(true); return 1'); await hold(700);
   await press('#status'); await sleep(250); await hold(1000);
   await press('[data-act=page-sound]'); await sleep(500); await hold(1700);
   await key('Escape'); await hold(700);
