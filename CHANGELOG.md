@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.0.1
+
+- **A proper installer.** Download `wispy-setup.exe` and run it: no unzipping, no admin rights, a Start Menu shortcut, optional launch at sign-in, and wispy shows up in Settings, Apps so you can uninstall it there (it gives your taskbar back and offers to delete your settings).
+- **The dock closes when you click away.** If you opened it with the mouse and clicked into search, clicking elsewhere left it open. It now closes.
+- **Quick settings footer.** The power and settings buttons sat stacked instead of side by side, and panels were see-through enough to show text behind them. Both fixed.
+- **Repo.** A launch page (`site/`) published with GitHub Pages at https://chengxii-lii.github.io/wispy/, and the release workflow builds the installer instead of a zip.
+
 ## v1.0.0
 
 First public release.
