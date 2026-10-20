@@ -23,6 +23,7 @@ ArchitecturesInstallIn64BitMode=x64compatible
 WizardStyle=modern
 SetupIconFile=..\assets\icon.ico
 UninstallDisplayIcon={app}\wispy.exe
+UninstallDisplayName=wispy
 OutputDir=..\release
 OutputBaseFilename=wispy-setup
 Compression=lzma2/max
@@ -38,6 +39,9 @@ Source: "restore-taskbar.ps1"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{userprograms}\wispy"; Filename: "{app}\wispy.exe"; Comment: "wispy: a home bar that replaces the taskbar"
+
+[InstallDelete]
+Type: files; Name: "{app}\uninstall.ps1"
 
 [Registry]
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "com.thinktrout.wispy"; ValueData: """{app}\wispy.exe"""; Flags: uninsdeletevalue; Tasks: startup
