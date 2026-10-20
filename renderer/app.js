@@ -1388,7 +1388,7 @@
     if (S.open) { closeBar(); return; }
     openBar(true); setMode('dock'); focusSearch();
   });
-  tb.on('blur', () => { if (S.pinned || S.mode !== 'dock') closeBar({ launched: true }); });
+  tb.on('blur', () => { if (S.pinned || S.searching || S.mode !== 'dock') closeBar({ launched: true }); });
   tb.on('mouse', (t) => {
     // a click somewhere: if it landed outside our UI, dismiss panels and a key-opened bar.
     // The notification can arrive late; a click that happened before the menu/panel opened
@@ -1399,7 +1399,7 @@
     if (S.ctx && !(el && el.closest('#ctx'))) { hideMenu(); return; }
     if (el && (el.closest('.hit') || el.closest('#items'))) return;
     if (S.mode !== 'dock') setMode('dock');
-    else if (S.pinned) closeBar({ launched: true });
+    else if (S.pinned || S.searching) closeBar({ launched: true });
   });
   addEventListener('contextmenu', (e) => e.preventDefault());
 
