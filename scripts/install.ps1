@@ -14,7 +14,8 @@ Get-Process wispy, wispy-helper, wisp, wisp-helper, neon, neon-helper, tinybar, 
 Start-Sleep -Milliseconds 600
 & "$PSScriptRoot\restore-taskbar.ps1" | Out-Null
 
-if (Test-Path $dest) { Remove-Item $dest -Recurse -Force }
+# keep unins* so a copy installed by wispy-setup.exe stays uninstallable from Settings, Apps
+if (Test-Path $dest) { Get-ChildItem $dest -Force | Where-Object { $_.Name -notlike 'unins*' } | Remove-Item -Recurse -Force }
 New-Item -ItemType Directory -Force $dest | Out-Null
 Copy-Item "$src\*" $dest -Recurse -Force
 foreach ($f in 'restore-taskbar.ps1', 'uninstall.ps1') {
