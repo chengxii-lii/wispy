@@ -1,12 +1,12 @@
 # Installs wispy for the current user: copies it to %LOCALAPPDATA%\Programs\wispy, adds a Start Menu
-# shortcut and launch-at-login, and starts it. Runs from a release zip (a `wispy` folder sits next to this
-# script) or from a source checkout after `npm run pack`. No admin rights needed.
+# shortcut and launch-at-login, and starts it. This is the developer path, from a source checkout after
+# `npm run pack`; users get wispy-setup.exe (scripts\installer.iss). No admin rights needed.
 param([switch]$NoLaunch, [switch]$NoStartup)
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 $src = Join-Path $PSScriptRoot 'wispy'
 if (-not (Test-Path (Join-Path $src 'wispy.exe'))) { $src = Join-Path $root 'dist\wispy-win32-x64' }
-if (-not (Test-Path (Join-Path $src 'wispy.exe'))) { throw "Nothing to install: run 'npm run pack' first (or use the release zip)." }
+if (-not (Test-Path (Join-Path $src 'wispy.exe'))) { throw "Nothing to install: run 'npm run pack' first." }
 $dest = Join-Path $env:LOCALAPPDATA 'Programs\wispy'
 
 # stop a running copy and put the taskbar back before swapping files

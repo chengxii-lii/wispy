@@ -284,7 +284,7 @@ uniform vec2 r; uniform float t; uniform vec2 m; uniform float k; uniform float 
 float h(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}
 float n(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);
   return mix(mix(h(i),h(i+vec2(1.,0.)),f.x),mix(h(i+vec2(0.,1.)),h(i+vec2(1.,1.)),f.x),f.y);}
-float fbm(vec2 p){float a=.5,s=0.;for(int i=0;i<6;i++){s+=a*n(p);p=p*2.03+vec2(17.,9.);a*=.5;}return s;}
+float fbm(vec2 p){float a=.5,s=0.;for(int i=0;i<5;i++){s+=a*n(p);p=p*2.03+vec2(17.,9.);a*=.5;}return s;}
 void main(){
   vec2 uv=gl_FragCoord.xy/r;
   vec2 asp=vec2(r.x/r.y,1.);
@@ -320,7 +320,7 @@ void main(){
     const start = 2.2 + Math.random() * 3;
     const S = { mx: .5, my: .5, k: 0, vel: 0, last: 0 };
     const size = () => {
-      const q = 0.42; // clouds are soft: render small, let the browser smooth it up
+      const q = 0.36; // clouds are soft: render small, let the browser smooth it up
       cv.width = Math.max(2, Math.round(innerWidth * q)); cv.height = Math.max(2, Math.round(innerHeight * q));
       gl.viewport(0, 0, cv.width, cv.height);
     };
@@ -336,7 +336,7 @@ void main(){
     addEventListener('resize', () => { size(); draw(S.last); });
     return {
       frame(ms) {
-        if (document.hidden || reduce || ms - S.last < 24) return;
+        if (document.hidden || reduce || ms - S.last < 33) return;
         S.last = ms;
         if (P.active) { S.mx = lerp(S.mx, P.x / innerWidth, .1); S.my = lerp(S.my, 1 - P.y / innerHeight, .1); }
         S.k = lerp(S.k, P.active ? 1 : 0, .07);

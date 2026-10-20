@@ -1098,7 +1098,11 @@ app.on('before-quit', (e) => {
 process.on('uncaughtException', (e) => { log('uncaught: ' + (e && e.stack || e)); });
 process.on('unhandledRejection', (e) => { log('unhandled rejection: ' + (e && e.stack || e)); });
 app.on('render-process-gone', (_e, _wc, d) => { log('renderer gone: ' + d.reason); if (win && !win.isDestroyed()) win.reload(); });
-app.on('child-process-gone', (_e, d) => log('child gone: ' + d.type + ' ' + d.reason));
+app.on('child-process-gone', (_e, d) => {
+  log('child gone: ' + d.type + ' ' + d.reason);
+  // a crashed GPU process leaves the transparent window frozen (nothing clickable): reload it
+  if (d.type === 'GPU') setTimeout(() => { if (win && !win.isDestroyed()) win.reload(); }, 400);
+});
 
 app.whenReady().then(() => {
   log('start ' + app.getVersion());
