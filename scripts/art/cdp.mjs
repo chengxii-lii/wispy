@@ -25,9 +25,11 @@ class Connection {
     this.ws = new WebSocket(url);
     this.id = 0;
     this.pending = new Map();
+    this.listeners = [];
     this.ws.onmessage = (m) => {
       const d = JSON.parse(m.data);
       if (d.id && this.pending.has(d.id)) { this.pending.get(d.id)(d); this.pending.delete(d.id); }
+      else if (d.method) for (const l of this.listeners) l(d);
     };
   }
   ready() { return new Promise((r) => (this.ws.readyState === 1 ? r() : (this.ws.onopen = r))); }
@@ -42,7 +44,7 @@ class Connection {
 }
 
 export async function launch({ gpu = true, inject = '' } = {}) {
-  const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'tinybar-art-'));
+  const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'neon-art-'));
   const proc = spawn(findBrowser(), [
     '--headless=new', '--remote-debugging-port=0', `--user-data-dir=${profile}`, '--no-first-run', '--no-default-browser-check',
     '--hide-scrollbars', ...(gpu ? ['--enable-gpu', '--use-angle=d3d11', '--ignore-gpu-blocklist'] : []), 'about:blank',
@@ -99,6 +101,17 @@ export class Page {
   async png() {
     const { data } = await this.send('Page.captureScreenshot', { format: 'png' });
     return Buffer.from(data, 'base64');
+  }
+  // Virtual time: after `freezeTime()`, the page's clock (rAF, CSS transitions, timers) only moves when `step(ms)`
+  // grants it, so frames can be captured at an exact, even rate no matter how long each screenshot takes.
+  async freezeTime() { await this.send('Emulation.setVirtualTimePolicy', { policy: 'pause' }); }
+  async step(ms) {
+    const done = new Promise((resolve) => {
+      const l = (d) => { if (d.method === 'Emulation.virtualTimeBudgetExpired' && d.sessionId === this.s) { this.c.listeners = this.c.listeners.filter((x) => x !== l); resolve(); } };
+      this.c.listeners.push(l);
+    });
+    await this.send('Emulation.setVirtualTimePolicy', { policy: 'pauseIfNetworkFetchesPending', budget: ms });
+    await done;
   }
   closeTarget() { return this.c.send('Target.closeTarget', { targetId: this.targetId }); }
 }

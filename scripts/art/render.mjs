@@ -1,10 +1,11 @@
-// Renders tinybar's README art into .github/assets: a ShaderGradient banner, screenshots of the real UI over
+// Renders neon's README art into .github/assets: a ShaderGradient banner, screenshots of the real UI over
 // the gradient, a social card and a demo GIF. Run with `npm run art` (installs this folder's dependencies first).
 //
 //   node scripts/art/render.mjs [banner] [shots] [social] [demo]   (default: all)
 //
-// The UI in every image is the real renderer (renderer/index.html), driven the way the harness drives it,
-// fed brand-free data from art-data.js.
+// The UI in every image is the real renderer (renderer/index.html), fed brand-free data from art-data.js.
+// Its frame loop is stopped and art.step(ms) moves springs and CSS animations by an exact amount, so every
+// image is deterministic and the GIF is an even 25 frames a second however long a screenshot takes.
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -47,25 +48,26 @@ const UI = 'art.ui';
 // open a page, wait for the gradient and the UI to be ready
 async function open(query, { width = 1440, height = 820, scale = WIDTH / 1440, scheme = 'dark' } = {}) {
   const p = await b.page(scene(query), { width, height, scale, scheme });
-  await p.until(`${UI} && ${UI}.__tinybar && ${UI}.document.querySelectorAll('#items .item').length > 0`);
+  await p.until(`${UI} && ${UI}.__neon && ${UI}.document.querySelectorAll('#items .item').length > 0`);
   await p.eval('document.fonts.ready.then(() => 1)');
   await sleep(4200); // the gradient needs a moment to draw
   return p;
 }
 const ui = (p, js) => p.eval(`(() => { const u = ${UI}; ${js} })()`);
-const settle = async (p, ms = 1100) => { await ui(p, 'u.__tinybar.advance(1400); return 1'); await sleep(ms); };
-async function dock(p) { await ui(p, 'u.__tinybar.openBar(true); return 1'); await settle(p, 500); }
+// let everything finish: promises and timers in real time, then physics and animations by an exact amount
+const settle = async (p, ms = 1400) => { await sleep(450); await p.eval(`art.step(${ms}); 1`); await sleep(250); await p.eval('art.step(80); 1'); };
+async function dock(p) { await ui(p, 'u.__neon.openBar(true); return 1'); await settle(p); }
 async function overItem(p, n) {
   const [x, y] = await p.eval(`art.itemCentre(${n})`);
-  await p.eval(`art.cursor(${x}, ${y}); ${UI}.__tinybar.advance(1000); 1`);
-  await sleep(500);
+  await p.eval(`art.cursor(${x}, ${y}); 1`);
+  await settle(p, 900);
 }
-const click = (p, sel) => ui(p, `u.document.querySelector(${JSON.stringify(sel)}).click(); return 1`);
+const click = async (p, sel) => { await ui(p, `u.document.querySelector(${JSON.stringify(sel)}).click(); return 1`); await settle(p); };
 async function search(p, text) {
   await ui(p, 'u.tbMock.emit("win-key"); return 1');
-  await sleep(500);
+  await settle(p, 500);
   await ui(p, `const q = u.document.querySelector('#q'); q.value = ${JSON.stringify(text)}; q.dispatchEvent(new Event('input')); return 1`);
-  await sleep(1500);
+  await settle(p);
 }
 
 try {
@@ -86,6 +88,7 @@ try {
 
   if (doing('shots')) {
     const base = 'decor=1&cursor=1&s=1.2&b=22';
+    const hide = (p) => p.eval('art.hideCursor(); 1');
     let p = await open(base + '&t=1.2');
     await dock(p);
     await overItem(p, 4);
@@ -95,37 +98,37 @@ try {
     p = await open(base + '&t=1.6');
     await dock(p);
     await search(p, 'mu');
-    await ui(p, 'u.document.querySelector(".sp-acts button").dispatchEvent(new MouseEvent("mouseover", { bubbles: true })); return 1');
-    await p.eval('art.hideCursor(); 1');
+    await hide(p);
     await p.screenshot(path.join(OUT, 'search.jpg')); console.log('search.jpg');
     await p.closeTarget();
 
     p = await open(base + '&t=1.0');
     await dock(p);
-    await click(p, '#status'); await sleep(700);
-    await click(p, '[data-act=page-sound]'); await sleep(1500);
-    await p.eval('art.hideCursor(); 1');
+    await click(p, '#status');
+    await click(p, '[data-act=page-sound]');
+    await settle(p);
+    await hide(p);
     await p.screenshot(path.join(OUT, 'sound.jpg')); console.log('sound.jpg');
     await p.closeTarget();
 
     p = await open(base + '&t=1.4');
     await dock(p);
-    await click(p, '#clock'); await sleep(1300);
-    await p.eval('art.hideCursor(); 1');
+    await click(p, '#clock');
+    await hide(p);
     await p.screenshot(path.join(OUT, 'notifications.jpg')); console.log('notifications.jpg');
     await p.closeTarget();
 
     p = await open(base + '&t=1.8');
     await dock(p);
-    await ui(p, 'u.__tinybar.setMode("settings"); return 1'); await sleep(1500);
-    await p.eval('art.hideCursor(); 1');
+    await ui(p, 'u.__neon.setMode("settings"); return 1'); await settle(p);
+    await hide(p);
     await p.screenshot(path.join(OUT, 'settings.jpg')); console.log('settings.jpg');
     await p.closeTarget();
 
-    p = await open(base + '&t=1.2&c1=%238fb2ff&c2=%23e2f4ff&c3=%235b7cff&br=1&scheme=light', { scheme: 'light' });
+    p = await open(base + '&t=1.2&c1=%23ffb089&c2=%23fff0dc&c3=%23ff7a45&br=1&scheme=light', { scheme: 'light' });
     await dock(p);
     await overItem(p, 2);
-    await p.eval('art.hideCursor(); 1');
+    await hide(p);
     await p.screenshot(path.join(OUT, 'light.jpg')); console.log('light.jpg');
     await p.closeTarget();
   }
@@ -136,20 +139,21 @@ try {
   server.close();
 }
 
-// The GIF: the real hover-and-open behaviour, then the Win-key search, then quick settings. The cursor travels
-// the way a hand would; every frame is a real screenshot, delayed by how long the capture really took.
+// The GIF: the real hover-and-open behaviour, then the Win-key search, then quick settings. Every frame is the UI
+// moved forward by exactly 40 ms, so motion is even; identical neighbouring frames are merged into one that lasts longer.
 async function demo() {
-  const W = 960, H = 540, S = 0.85;
+  const W = 960, H = 540, S = 0.85, FRAME = 40;
   const p = await open('decor=1&cursor=1&s=0.85&b=14&t=1.2', { width: W, height: H, scale: 1 });
   const frames = [];
-  let last = Date.now();
-  const frame = async (minDelay = 0) => {
-    const rgba = PNG.sync.read(await p.png()).data;
-    const now = Date.now();
-    frames.push({ rgba, delay: Math.max(minDelay, Math.min(260, Math.round((now - last) / 10) * 10)) });
-    last = Date.now();
+  const frame = async (n = 1) => {
+    for (let i = 0; i < n; i++) {
+      await p.eval(`art.step(${FRAME}); 1`);
+      const rgba = PNG.sync.read(await p.png()).data;
+      const prev = frames[frames.length - 1];
+      if (prev && Buffer.compare(prev.rgba, rgba) === 0) prev.delay += FRAME; else frames.push({ rgba, delay: FRAME });
+    }
   };
-  const hold = async (ms, every = 140) => { const end = Date.now() + ms; while (Date.now() < end) { await sleep(every); await frame(); } };
+  const hold = (ms) => frame(Math.round(ms / FRAME));
   const to = async (x0, y0, x1, y1, steps) => {
     for (let i = 1; i <= steps; i++) {
       const e = i / steps, k = e * e * (3 - 2 * e);
@@ -157,45 +161,47 @@ async function demo() {
       await frame();
     }
   };
+  const key = (k) => ui(p, `u.document.dispatchEvent(new KeyboardEvent("keydown", { key: ${JSON.stringify(k)} })); return 1`);
+  const press = async (sel) => { await ui(p, `u.document.querySelector(${JSON.stringify(sel)}).click(); return 1`); };
+
   await p.eval('art.cursor(470, 300); 1');
-  await sleep(600); last = Date.now(); await frame(700);
-  await to(470, 300, 470, 625, 9);       // the pill fades in and is pulled toward the cursor
-  await hold(450);
-  await to(470, 625, 470, 699, 5);       // touch the edge: the dock opens
-  await hold(900);
+  await sleep(600);
+  await hold(600);
+  await to(470, 300, 470, 625, 18);        // the pill fades in and is pulled toward the cursor
+  await hold(500);
+  await to(470, 625, 470, 699, 7);         // touch the edge: the dock opens
+  await hold(1100);
   const [x0, y0] = await p.eval('art.itemCentre(0)');
   const [x7] = await p.eval('art.itemCentre(7)');
-  await to(470, 699, x0, y0, 8);
-  await to(x0, y0, x7, y0, 20);          // sweep across the icons
-  await to(x7, y0, 470, 380, 7);         // leave: it tucks away
-  await hold(900);
+  await to(470, 699, x0, y0, 10);
+  await to(x0, y0, x7, y0, 26);            // sweep across the icons
+  await hold(240);
+  await to(x7, y0, 470, 380, 10);          // leave: it tucks away
   await p.eval('art.hideCursor(); 1');
+  await hold(1000);
   await ui(p, 'u.tbMock.emit("win-key"); return 1');   // Win key: search is ready
-  await hold(500);
+  await hold(600);
   for (const text of ['m', 'mu', 'mus']) {
     await ui(p, `const q = u.document.querySelector('#q'); q.value = ${JSON.stringify(text)}; q.dispatchEvent(new Event('input')); return 1`);
-    await hold(text === 'mus' ? 1800 : 280, 110);
+    await sleep(300);
+    await hold(text === 'mus' ? 1700 : 320);
   }
-  await ui(p, 'u.document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" })); return 1');
-  await hold(300);
-  await ui(p, 'u.document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" })); return 1');
-  await hold(500);
-  await ui(p, 'u.__tinybar.openBar(true); return 1');
-  await hold(600);
-  await click(p, '#status'); await hold(1000);
-  await click(p, '[data-act=page-sound]'); await hold(1700);
-  await ui(p, 'u.document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" })); return 1');
-  await hold(500);
+  await key('Escape'); await hold(360);
+  await key('Escape'); await hold(500);
+  await ui(p, 'u.__neon.openBar(true); return 1'); await hold(700);
+  await press('#status'); await sleep(250); await hold(1000);
+  await press('[data-act=page-sound]'); await sleep(500); await hold(1700);
+  await key('Escape'); await hold(700);
   await p.closeTarget();
 
   // ART_DEBUG=<folder> keeps a handful of frames as PNGs, to check the sequence by eye
   if (process.env.ART_DEBUG) {
     fs.mkdirSync(process.env.ART_DEBUG, { recursive: true });
-    for (const i of [0, 8, 14, 20, 30, 40, 52, 62, 72, frames.length - 4]) {
+    for (const i of [0, 6, 12, 22, 32, 45, 60, 80, 100, frames.length - 3]) {
       if (!frames[i]) continue;
       const png = new PNG({ width: W, height: H });
       png.data = Buffer.from(frames[i].rgba);
-      fs.writeFileSync(path.join(process.env.ART_DEBUG, `f${String(i).padStart(2, '0')}.png`), PNG.sync.write(png));
+      fs.writeFileSync(path.join(process.env.ART_DEBUG, `f${String(i).padStart(3, '0')}.png`), PNG.sync.write(png));
     }
   }
 
@@ -212,7 +218,7 @@ async function demo() {
     }
   };
   take(frames[0].rgba, false, 3);
-  for (let i = 1; i < frames.length; i += 4) take(frames[i].rgba, true, 1);
+  for (let i = 1; i < frames.length; i += 5) take(frames[i].rgba, true, 1);
   const palette = quantize(new Uint8Array(sample), 255);
   while (palette.length < 256) palette.push([0, 0, 0]);
   const gif = GIFEncoder();
@@ -229,5 +235,6 @@ async function demo() {
   }
   gif.finish();
   fs.writeFileSync(path.join(OUT, 'demo.gif'), gif.bytes());
-  console.log(`demo.gif (${frames.length} frames, ${Math.round(gif.bytes().length / 1024)} KB)`);
+  const total = frames.reduce((s, f) => s + f.delay, 0);
+  console.log(`demo.gif (${frames.length} frames, ${(total / 1000).toFixed(1)} s, ${Math.round(gif.bytes().length / 1024)} KB)`);
 }

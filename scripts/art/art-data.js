@@ -10,6 +10,8 @@
     static now() { return FIXED; }
   }
   window.Date = FixedDate;
+  // inside the UI frame the real frame loop is stopped; art.step() moves everything by an exact amount
+  if (window !== window.top) window.requestAnimationFrame = () => 0;
   navigator.getBattery = async () => ({ level: 0.82, charging: false, chargingTime: Infinity, dischargingTime: 12600, addEventListener() {} });
   try { localStorage.setItem('tb-hint', '1'); } catch (e) { /* storage unavailable */ }
 
@@ -33,7 +35,7 @@
   };
   const dock = [
     { id: 'pin:files', name: 'Files', pinned: true, icon: ICONS.files, running: 2, active: false },
-    { id: 'pin:browser', name: 'Browser', pinned: true, icon: ICONS.browser, running: 3, active: true, wins: [{ hwnd: 1, title: 'tinybar · GitHub' }, { hwnd: 2, title: 'Release notes' }, { hwnd: 3, title: 'New tab' }] },
+    { id: 'pin:browser', name: 'Browser', pinned: true, icon: ICONS.browser, running: 3, active: true, wins: [{ hwnd: 1, title: 'neon · GitHub' }, { hwnd: 2, title: 'Release notes' }, { hwnd: 3, title: 'New tab' }] },
     { id: 'pin:mail', name: 'Mail', pinned: true, icon: ICONS.mail, running: 0, active: false },
     { id: 'pin:messages', name: 'Messages', pinned: true, icon: ICONS.messages, running: 1, active: false },
     { id: 'pin:music', name: 'Music', pinned: true, icon: ICONS.music, running: 1, active: false },
@@ -50,7 +52,7 @@
   window.__artOverrides = {
     art: true,
     init: {
-      accent: '#4cc2ff', dock, volume: { level: 64, muted: false },
+      accent: '#ff8a3d', dock, volume: { level: 64, muted: false },
       lang: { cur: 'ENG', list: [{ key: 'en', short: 'ENG', name: 'English (United States)', sub: 'US keyboard', cur: true }, { key: 'ja', short: 'JPN', name: 'Japanese', sub: 'Microsoft IME', cur: false }] },
       tray: ['#34d399', '#8b7bff', '#ffb020', '#35a7ff', '#ff5a5f'].map((c, i) => ({ key: 'k' + i, tip: 'Tray app ' + (i + 1), icon: svg(c, c, `<circle cx="64" cy="64" r="26" ${W}/>`) })),
       history: [
