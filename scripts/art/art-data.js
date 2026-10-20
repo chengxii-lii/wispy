@@ -12,6 +12,8 @@
   window.Date = FixedDate;
   // inside the UI frame the real frame loop is stopped; art.step() moves everything by an exact amount
   if (window !== window.top) window.requestAnimationFrame = () => 0;
+  // the UI frame ends at the bottom of the shot, so a long shadow would be cut off in a hard line: keep it tight
+  if (window !== window.top) document.addEventListener('DOMContentLoaded', () => document.documentElement.style.setProperty('--shadow', '0 4px 12px rgba(30,50,90,.18), 0 1px 3px rgba(30,50,90,.14)'));
   navigator.getBattery = async () => ({ level: 0.82, charging: false, chargingTime: Infinity, dischargingTime: 12600, addEventListener() {} });
   try { localStorage.setItem('tb-hint', '1'); } catch (e) { /* storage unavailable */ }
 
@@ -35,7 +37,7 @@
   };
   const dock = [
     { id: 'pin:files', name: 'Files', pinned: true, icon: ICONS.files, running: 2, active: false },
-    { id: 'pin:browser', name: 'Browser', pinned: true, icon: ICONS.browser, running: 3, active: true, wins: [{ hwnd: 1, title: 'wisp · GitHub' }, { hwnd: 2, title: 'Release notes' }, { hwnd: 3, title: 'New tab' }] },
+    { id: 'pin:browser', name: 'Browser', pinned: true, icon: ICONS.browser, running: 3, active: true, wins: [{ hwnd: 1, title: 'wispy · GitHub' }, { hwnd: 2, title: 'Release notes' }, { hwnd: 3, title: 'New tab' }] },
     { id: 'pin:mail', name: 'Mail', pinned: true, icon: ICONS.mail, running: 0, active: false },
     { id: 'pin:messages', name: 'Messages', pinned: true, icon: ICONS.messages, running: 1, active: false },
     { id: 'pin:music', name: 'Music', pinned: true, icon: ICONS.music, running: 1, active: false },
@@ -52,7 +54,7 @@
   window.__artOverrides = {
     art: true,
     init: {
-      accent: '#ff8a3d', dock, volume: { level: 64, muted: false },
+      accent: '#e4ebf3', dock, volume: { level: 64, muted: false },
       lang: { cur: 'ENG', list: [{ key: 'en', short: 'ENG', name: 'English (United States)', sub: 'US keyboard', cur: true }, { key: 'ja', short: 'JPN', name: 'Japanese', sub: 'Microsoft IME', cur: false }] },
       tray: ['#34d399', '#8b7bff', '#ffb020', '#35a7ff', '#ff5a5f'].map((c, i) => ({ key: 'k' + i, tip: 'Tray app ' + (i + 1), icon: svg(c, c, `<circle cx="64" cy="64" r="26" ${W}/>`) })),
       history: [

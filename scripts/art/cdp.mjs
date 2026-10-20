@@ -44,7 +44,7 @@ class Connection {
 }
 
 export async function launch({ gpu = true, inject = '' } = {}) {
-  const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'wisp-art-'));
+  const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'wispy-art-'));
   const proc = spawn(findBrowser(), [
     '--headless=new', '--remote-debugging-port=0', `--user-data-dir=${profile}`, '--no-first-run', '--no-default-browser-check',
     '--hide-scrollbars', ...(gpu ? ['--enable-gpu', '--use-angle=d3d11', '--ignore-gpu-blocklist'] : []), 'about:blank',

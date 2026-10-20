@@ -1,6 +1,6 @@
 {
-  "name": "wisp",
-  "productName": "wisp",
+  "name": "wispy",
+  "productName": "wispy",
   "version": "1.0.0",
   "private": true,
   "description": "A phone-style home bar that replaces the Windows taskbar: it rises to meet your cursor, opens into a dock, and holds search, quick settings and notifications.",
@@ -14,13 +14,13 @@
     "productivity",
     "customization"
   ],
-  "homepage": "https://github.com/chengxii-lii/wisp#readme",
+  "homepage": "https://github.com/chengxii-lii/wispy#readme",
   "bugs": {
-    "url": "https://github.com/chengxii-lii/wisp/issues"
+    "url": "https://github.com/chengxii-lii/wispy/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/chengxii-lii/wisp.git"
+    "url": "git+https://github.com/chengxii-lii/wispy.git"
   },
   "author": "ThinkTrout",
   "license": "MIT",

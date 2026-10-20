@@ -1,7 +1,7 @@
 {
-  "name": "wisp-art",
+  "name": "wispy-art",
   "private": true,
-  "description": "Renders wisp's README art: a ShaderGradient backdrop with the real UI on top.",
+  "description": "Renders wispy's README art: a cloud-sky backdrop (or a ShaderGradient) with the real UI on top.",
   "dependencies": {
     "@react-three/fiber": "^8.18.0",
     "@shadergradient/react": "2.4.20",

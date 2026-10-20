@@ -1,4 +1,4 @@
-// wisp renderer: spring-driven bar, two cursor zones, dock magnification, search, quick settings.
+// wispy renderer: spring-driven bar, two cursor zones, dock magnification, search, quick settings.
 (() => {
   'use strict';
   const $ = (s, r = document) => r.querySelector(s);
@@ -51,22 +51,25 @@
 
   // ---------------------------------------------------------------- settings applied to the UI
   let cfg = {
-    theme: 'auto', accent: 'system', glass: 46, iconSize: 46, magnify: 1.62,
-    edgeOpen: true, edge: 'med', delay: 35, keepOpen: false, winKey: 'wisp', monitor: 'primary',
+    theme: 'auto', accent: 'cloud', glass: 46, iconSize: 46, magnify: 1.62,
+    edgeOpen: true, edge: 'med', delay: 35, keepOpen: false, winKey: 'wispy', monitor: 'primary',
     clock24: false, seconds: false, dateFmt: 'short',
     showTray: true, showLang: true, showBattPct: true, showTaskView: true, showDesktop: false,
     dnd: false, searchEngine: 'google',
   };
-  let sysAccent = '#ff7a1a';
+  let sysAccent = '#e4ebf3';
+  const lightMq = window.matchMedia('(prefers-color-scheme: light)');
+  // "cloud" is the neutral default: soft white on dark, slate on light
+  const cloudAccent = () => (cfg.theme === 'light' || (cfg.theme === 'auto' && lightMq.matches)) ? '#4b5a6e' : '#e4ebf3';
   const rootEl = document.documentElement;
   function inkFor(hex) {
     const n = parseInt(hex.slice(1), 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255;
-    return (0.299 * r + 0.587 * g + 0.114 * b) > 150 ? '#1a0b02' : '#ffffff';
+    return (0.299 * r + 0.587 * g + 0.114 * b) > 150 ? '#14181d' : '#ffffff';
   }
   function applyConfig(c) {
     Object.assign(cfg, c);
     if (cfg.theme === 'auto') rootEl.removeAttribute('data-theme'); else rootEl.setAttribute('data-theme', cfg.theme);
-    const acc = cfg.accent === 'system' ? sysAccent : cfg.accent;
+    const acc = cfg.accent === 'system' ? sysAccent : cfg.accent === 'cloud' ? cloudAccent() : cfg.accent;
     rootEl.style.setProperty('--accent', acc);
     rootEl.style.setProperty('--accent-ink', inkFor(acc));
     rootEl.style.setProperty('--glass', (cfg.glass / 100).toFixed(2));
@@ -943,7 +946,7 @@
   });
 
   // ---------------------------------------------------------------- settings panel
-  const SWATCHES = ['#ff7a1a', '#4cc2ff', '#7c8cff', '#a78bfa', '#34d399', '#fb7185'];
+  const SWATCHES = ['cloud', '#4cc2ff', '#7c8cff', '#a78bfa', '#34d399', '#fb7185'];
   const SCHEMA = [
     { title: 'Appearance', rows: [
       { k: 'theme', label: 'Theme', t: 'seg', opts: [['auto', 'Auto'], ['dark', 'Dark'], ['light', 'Light']] },
@@ -957,7 +960,7 @@
       { k: 'edge', label: 'Edge sensitivity', t: 'seg', opts: [['low', 'Low'], ['med', 'Medium'], ['high', 'High']] },
       { k: 'delay', label: 'Open delay', t: 'range', min: 0, max: 400, step: 5, fmt: (v) => v + ' ms' },
       { k: 'keepOpen', label: 'Always show the dock', t: 'switch' },
-      { k: 'winKey', label: 'Windows key', t: 'seg', opts: [['wisp', 'Open wisp'], ['start', 'Start menu']] },
+      { k: 'winKey', label: 'Windows key', t: 'seg', opts: [['wispy', 'Open wispy'], ['start', 'Start menu']] },
       { k: 'monitor', label: 'Show on', t: 'monitor' },
     ] },
     { title: 'Clock and buttons', rows: [
@@ -1132,17 +1135,17 @@
       m.running && m.canEnd && { label: 'End task', icon: 'i-trash', danger: true, fn: act('end') },
     ], { title: m.name, icon: m.icon });
   }
-  async function wispMenu(x, y) {
+  async function wispyMenu(x, y) {
     const i = await tb.menuInfo();
     showMenu(x, y, [
-      { label: 'wisp settings', icon: 'i-gear', fn: () => toggleMode('settings') },
+      { label: 'wispy settings', icon: 'i-gear', fn: () => toggleMode('settings') },
       { sep: true },
       i.packaged && { label: 'Launch at login', icon: 'i-power', checked: !!i.login, keep: true,
         fn: (b) => { const sw = b.querySelector('.switch'); const on = !sw.classList.contains('on'); sw.classList.toggle('on', on); tb.setLogin(on); } },
       { label: 'Notification settings', icon: 'i-bell', fn: () => settings('ms-settings:notifications') },
       { sep: true },
-      { label: 'Quit wisp', icon: 'i-x', danger: true, fn: () => tb.quit() },
-    ], { title: 'wisp' });
+      { label: 'Quit wispy', icon: 'i-x', danger: true, fn: () => tb.quit() },
+    ], { title: 'wispy' });
   }
   document.addEventListener('contextmenu', (e) => {
     e.preventDefault();
@@ -1203,7 +1206,7 @@
       return;
     }
     if (t.closest('#tray-btn, #p-tray')) return; // tray icons open their own app's menu
-    if (t.closest('#row, #bar, #items')) wispMenu(x, y);
+    if (t.closest('#row, #bar, #items')) wispyMenu(x, y);
   });
 
   // ---------------------------------------------------------------- notification center + calendar
@@ -1366,7 +1369,7 @@
   }
   tb.on('notify', addToast);
   tb.on('close-failed', (f) => addToast({
-    id: -1, app: 'wisp', icon: null, title: `${f.name} didn’t close`,
+    id: -1, app: 'wispy', icon: null, title: `${f.name} didn’t close`,
     body: 'It may be asking to save, or running in the background.',
     action: f.canEnd ? { label: 'End task', fn: () => tb.appAction(f.id, 'end') } : null,
   }));
@@ -1379,6 +1382,7 @@
   tb.on('dock', setDock);
   tb.on('fullscreen', (f) => { S.fullscreen = f; if (f && S.open) closeBar(); wake(); });
   tb.on('accent', (c) => { sysAccent = c; applyConfig({}); });
+  lightMq.addEventListener('change', () => applyConfig({}));
   tb.on('config', (c) => applyConfig(c));
   tb.on('win-key', () => {
     if (S.open) { closeBar(); return; }
@@ -1412,10 +1416,10 @@
     try {
       if (!localStorage.getItem('tb-hint')) {
         localStorage.setItem('tb-hint', '1');
-        setTimeout(() => addToast({ id: -2, app: 'wisp', icon: null, title: 'Make it yours', body: 'Right-click the bar and choose wisp settings.' }), 2500);
+        setTimeout(() => addToast({ id: -2, app: 'wispy', icon: null, title: 'Make it yours', body: 'Right-click the bar and choose wispy settings.' }), 2500);
       }
     } catch (e) { /* storage unavailable */ }
   });
   let simT = 0;
-  window.__wisp = { S, sp, openBar, closeBar, setMode, advance(ms) { for (let left = ms; left > 0.01; left -= 16) { const d = Math.min(16, left); simT += d; update(d / 1000, performance.now() + simT); } } };
+  window.__wispy = { S, sp, openBar, closeBar, setMode, advance(ms) { for (let left = ms; left > 0.01; left -= 16) { const d = Math.min(16, left); simT += d; update(d / 1000, performance.now() + simT); } } };
 })();

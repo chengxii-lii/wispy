@@ -12,8 +12,8 @@
   --text: #f4f4f5;
   --muted: rgba(244, 244, 245, .58);
   --faint: rgba(244, 244, 245, .34);
-  --accent: #ff7a1a;
-  --accent-ink: #04121b;
+  --accent: #e4ebf3;
+  --accent-ink: #14181d;
   --pill: #ffffff;
   --pill-ring: rgba(0, 0, 0, .38);
   --shadow: 0 14px 36px rgba(0, 0, 0, .4), 0 2px 8px rgba(0, 0, 0, .28);
@@ -514,6 +514,7 @@ button[disabled], .pill-btn[disabled], .qs.busy button { cursor: default; }
 .swatches button { width: 22px; height: 22px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .25); transition: transform .15s var(--ease), box-shadow .15s; }
 .swatches button:hover { transform: scale(1.15); }
 .swatches button.on { box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--text); }
+.swatches button[data-v="cloud"] { background: linear-gradient(135deg, #ffffff, #b4c3d6); }
 .swatches .sys { background: conic-gradient(#4cc2ff, #7c8cff, #fb7185, #fbbf24, #34d399, #4cc2ff); }
 .sbtns { display: flex; gap: 8px; padding: 14px 4px 4px; }
 .sbtns .pill-btn { flex: 1; height: 34px; border-radius: 12px; }

@@ -16,7 +16,7 @@ body:
   - type: input
     id: version
     attributes:
-      label: wisp version
+      label: wispy version
       placeholder: "1.0.0"
     validations:
       required: true
@@ -36,5 +36,5 @@ body:
     id: log
     attributes:
       label: Log
-      description: "The last lines of %APPDATA%\\wisp\\wisp.log, if something crashed."
+      description: "The last lines of %APPDATA%\\wispy\\wispy.log, if something crashed."
       render: text

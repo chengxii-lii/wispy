@@ -1,4 +1,4 @@
-// wisp main process: one transparent click-through window at the bottom of the
+// wispy main process: one transparent click-through window at the bottom of the
 // primary display, a native helper for the OS-level bits, and the data the UI shows.
 const { app, BrowserWindow, screen, ipcMain, shell, Tray, Menu, nativeImage, systemPreferences, clipboard } = require('electron');
 const { spawn, execFile } = require('child_process');
@@ -9,12 +9,12 @@ const os = require('os');
 const { DatabaseSync } = require('node:sqlite');
 const SETTINGS = require('./settings-list');
 
-// wisp was called tinybar, then neon, before its public release: carry the old settings over, once
+// wispy was called tinybar, neon, then wisp before its public release: carry the old settings over, once
 (() => {
   const dir = app.getPath('userData');
   try {
     fs.mkdirSync(dir, { recursive: true });
-    for (const name of ['neon', 'tinybar']) {
+    for (const name of ['wisp', 'neon', 'tinybar']) {
       const old = path.join(app.getPath('appData'), name);
       for (const f of ['config.json', 'pins.json', 'notifications.json']) {
         if (!fs.existsSync(path.join(dir, f)) && fs.existsSync(path.join(old, f))) fs.copyFileSync(path.join(old, f), path.join(dir, f));
@@ -25,12 +25,12 @@ const SETTINGS = require('./settings-list');
 
 const W = 920;
 const H = 700;
-const DEBUG_PORT = process.env.WISP_DEBUG_PORT;
+const DEBUG_PORT = process.env.WISPY_DEBUG_PORT;
 if (DEBUG_PORT) app.commandLine.appendSwitch('remote-debugging-port', DEBUG_PORT);
 app.commandLine.appendSwitch('disable-features', 'CalculateNativeWinOcclusion');
 
 if (!app.requestSingleInstanceLock()) { app.exit(0); }
-app.setAppUserModelId('com.thinktrout.wisp');
+app.setAppUserModelId('com.thinktrout.wispy');
 
 let win = null, tray = null, helper = null, helperBuf = '';
 let quitting = false, helperReady = false;
@@ -47,7 +47,7 @@ let lastVolume = null;
 let lastLang = null;
 let lastTray = [];
 
-const logFile = path.join(app.getPath('userData'), 'wisp.log');
+const logFile = path.join(app.getPath('userData'), 'wispy.log');
 function log(s) {
   try {
     const line = new Date().toISOString() + ' ' + s + '\n';
@@ -59,11 +59,11 @@ let searchSeq = 0;
 
 // ---------------------------------------------------------------- settings
 const DEFAULTS = {
-  theme: 'auto', accent: 'system', glass: 46, iconSize: 46, magnify: 1.62,
-  edgeOpen: true, edge: 'med', delay: 35, keepOpen: false, winKey: 'wisp', monitor: 'primary',
+  theme: 'auto', accent: 'cloud', glass: 46, iconSize: 46, magnify: 1.62,
+  edgeOpen: true, edge: 'med', delay: 35, keepOpen: false, winKey: 'wispy', monitor: 'primary',
   clock24: false, seconds: false, dateFmt: 'short',
   showTray: true, showLang: true, showBattPct: true, showTaskView: true, showDesktop: false,
-  dnd: false, searchEngine: 'google', v: 2,
+  dnd: false, searchEngine: 'google', v: 3,
 };
 const ENGINES = {
   google: 'https://www.google.com/search?q=', duckduckgo: 'https://duckduckgo.com/?q=',
@@ -76,15 +76,19 @@ try {
   const j = JSON.parse(fs.readFileSync(cfgFile, 'utf8'));
   for (const k in DEFAULTS) if (typeof j[k] === typeof DEFAULTS[k] || (k === 'monitor' && j[k] != null)) cfg[k] = j[k];
   // v2: Show desktop used to be a thin sliver that was on by default; it is now an icon button that is off
-  if (j.v !== DEFAULTS.v) { cfg.showDesktop = DEFAULTS.showDesktop; migrated = true; }
+  const was = j.v || 1;
+  if (was < 2) cfg.showDesktop = DEFAULTS.showDesktop;
+  // v3: the default accent became the neutral "cloud" instead of following Windows
+  if (was < 3) cfg.accent = DEFAULTS.accent;
+  if (was !== DEFAULTS.v) { migrated = true; cfg.v = DEFAULTS.v; }
   // the Windows key option was stored under the app's name, which has changed twice
-  if (cfg.winKey !== 'start') cfg.winKey = 'wisp';
+  if (cfg.winKey !== 'start') cfg.winKey = 'wispy';
 } catch (e) { /* first run */ }
 function saveCfg() { try { fs.writeFileSync(cfgFile, JSON.stringify(cfg, null, 1)); } catch (e) { /* ignore */ } }
 if (migrated) saveCfg();   // stamp migrated settings with the new version
 function applyCfg(prev) {
   if (!prev || prev.monitor !== cfg.monitor) placeSoon();
-  if (!prev || prev.winKey !== cfg.winKey) send({ cmd: 'winHijack', on: cfg.winKey === 'wisp' });
+  if (!prev || prev.winKey !== cfg.winKey) send({ cmd: 'winHijack', on: cfg.winKey === 'wispy' });
 }
 function setConfig(patch) {
   const prev = { ...cfg };
@@ -108,11 +112,11 @@ const iconInflight = new Map();    // key -> Promise
 fs.mkdirSync(iconDir, { recursive: true });
 
 // ---------------------------------------------------------------- helper
-function helperPath() { return path.join(__dirname, 'helper', 'wisp-helper.exe'); }
+function helperPath() { return path.join(__dirname, 'helper', 'wispy-helper.exe'); }
 
 function startHelper() {
   helperReady = false;
-  helper = spawn(helperPath(), ['--self', process.execPath, ...(process.env.WISP_TEST ? ['--test-injected'] : [])], { stdio: ['pipe', 'pipe', 'ignore'], windowsHide: true });
+  helper = spawn(helperPath(), ['--self', process.execPath, ...(process.env.WISPY_TEST ? ['--test-injected'] : [])], { stdio: ['pipe', 'pipe', 'ignore'], windowsHide: true });
   helper.stdout.setEncoding('utf8');
   helper.stdout.on('data', (chunk) => {
     helperBuf += chunk;
@@ -149,7 +153,7 @@ function onHelper(m) {
       helperReady = true;
       send({ cmd: 'hideTaskbar' });
       send({ cmd: 'bannersOff' });
-      send({ cmd: 'winHijack', on: cfg.winKey === 'wisp' });
+      send({ cmd: 'winHijack', on: cfg.winKey === 'wispy' });
       break;
     case 'lang': lastLang = m; toRenderer('lang', m); break;
     case 'tray':
@@ -382,8 +386,8 @@ async function readPinned() {
   pinned = applyUserPins(windowsPins);
 }
 
-// ---------------------------------------------------------------- wisp's own pins
-// Windows has no API for other apps to pin to its taskbar, so pins added or removed in wisp
+// ---------------------------------------------------------------- wispy's own pins
+// Windows has no API for other apps to pin to its taskbar, so pins added or removed in wispy
 // live in pins.json and are layered over the pins Windows already has.
 let windowsPins = [];
 const pinsFile = path.join(app.getPath('userData'), 'pins.json');
@@ -783,7 +787,7 @@ ipcMain.handle('icon', async (_e, src, key) => {
 
 
 // ---------------------------------------------------------------- notifications
-// Windows keeps every toast it shows in wpndatabase.db. Watch it and mirror new ones as wisp banners.
+// Windows keeps every toast it shows in wpndatabase.db. Watch it and mirror new ones as wispy banners.
 const wpnDir = path.join(process.env.LOCALAPPDATA || '', 'Microsoft', 'Windows', 'Notifications');
 const notifs = new Map();
 let lastNotifId = -1, wpnSig = '';
@@ -817,7 +821,7 @@ function pollNotifs() {
   let sig = '';
   try { sig = ['wpndatabase.db', 'wpndatabase.db-wal'].map((f) => fs.statSync(path.join(wpnDir, f)).mtimeMs).join('|'); } catch (e) { return; }
   if (sig === wpnSig) return;
-  const tmp = path.join(os.tmpdir(), 'wisp-wpn');
+  const tmp = path.join(os.tmpdir(), 'wispy-wpn');
   let db;
   try {
     fs.mkdirSync(tmp, { recursive: true });
@@ -964,7 +968,7 @@ ipcMain.handle('wifi-join', async (_e, ssid, password, auth) => {
     ${open ? '' : `<sharedKey><keyType>passPhrase</keyType><protected>false</protected><keyMaterial>${xmlEsc(password)}</keyMaterial></sharedKey>`}
   </security></MSM>
 </WLANProfile>`;
-    const file = path.join(os.tmpdir(), 'wisp-wlan-' + crypto.randomBytes(6).toString('hex') + '.xml');
+    const file = path.join(os.tmpdir(), 'wispy-wlan-' + crypto.randomBytes(6).toString('hex') + '.xml');
     try {
       fs.writeFileSync(file, xml);
       const r = await run('netsh', ['wlan', 'add', 'profile', 'filename=' + file, 'user=current']);
@@ -1019,7 +1023,7 @@ ipcMain.on('set-brightness', (_e, v) => { brightNext = Math.round(v); pumpBright
 ipcMain.on('volume', (_e, o) => send({ cmd: 'volume', ...o }));
 ipcMain.on('open-settings', (_e, uri) => shell.openExternal(uri));
 
-// power menu. WISP_DRYRUN=1 only logs, so this can be tested without turning the PC off
+// power menu. WISPY_DRYRUN=1 only logs, so this can be tested without turning the PC off
 ipcMain.on('power', (_e, act) => {
   const cmds = {
     lock: ['rundll32.exe', ['user32.dll,LockWorkStation']],
@@ -1027,7 +1031,7 @@ ipcMain.on('power', (_e, act) => {
     restart: ['shutdown.exe', ['/r', '/t', '0']],
     shutdown: ['shutdown.exe', ['/s', '/t', '0']],
   };
-  if (process.env.WISP_DRYRUN) { log('power (dry run): ' + act); return; }
+  if (process.env.WISPY_DRYRUN) { log('power (dry run): ' + act); return; }
   if (act === 'sleep') { send({ cmd: 'sleep' }); return; }
   const c = cmds[act];
   if (c) execFile(c[0], c[1], { windowsHide: true }, () => {});
@@ -1058,7 +1062,7 @@ ipcMain.handle('init', () => ({
 }));
 
 function accent() {
-  try { return '#' + systemPreferences.getAccentColor().slice(0, 6); } catch (e) { return '#ff7a1a'; }
+  try { return '#' + systemPreferences.getAccentColor().slice(0, 6); } catch (e) { return '#e4ebf3'; }
 }
 systemPreferences.on && systemPreferences.on('accent-color-changed', () => toRenderer('accent', accent()));
 
@@ -1066,9 +1070,9 @@ systemPreferences.on && systemPreferences.on('accent-color-changed', () => toRen
 function createTray() {
   const img = nativeImage.createFromPath(path.join(__dirname, 'assets', 'tray.png'));
   tray = new Tray(img);
-  tray.setToolTip('wisp');
+  tray.setToolTip('wispy');
   const build = () => Menu.buildFromTemplate([
-    { label: 'Open wisp', click: () => openFromKey() },
+    { label: 'Open wispy', click: () => openFromKey() },
     { type: 'separator' },
     {
       label: 'Launch at login', type: 'checkbox', enabled: app.isPackaged,

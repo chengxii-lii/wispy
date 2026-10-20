@@ -15,18 +15,18 @@ function Draw([int]$size) {
     $p.AddArc($x + $w - $d, $y + $h - $d, $d, $d, 0, 90); $p.AddArc($x, $y + $h - $d, $d, $d, 90, 90)
     $p.CloseFigure(); $p
   }
-  $bg = New-Object System.Drawing.Drawing2D.LinearGradientBrush ((New-Object System.Drawing.PointF 0, 0), (New-Object System.Drawing.PointF 0, $size), [System.Drawing.Color]::FromArgb(255, 44, 46, 56), [System.Drawing.Color]::FromArgb(255, 22, 23, 28))
+  $bg = New-Object System.Drawing.Drawing2D.LinearGradientBrush ((New-Object System.Drawing.PointF 0, 0), (New-Object System.Drawing.PointF 0, $size), [System.Drawing.Color]::FromArgb(255, 214, 227, 243), [System.Drawing.Color]::FromArgb(255, 150, 176, 212))
   $g.FillPath($bg, (RR (8 * $s) (8 * $s) (240 * $s) (240 * $s) (58 * $s)))
   # dock capsule
-  $cap = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(255, 58, 60, 72))
+  $cap = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(235, 255, 255, 255))
   $g.FillPath($cap, (RR (44 * $s) (118 * $s) (168 * $s) (52 * $s) (26 * $s)))
-  $cols = @([System.Drawing.Color]::FromArgb(255, 255, 122, 26), [System.Drawing.Color]::FromArgb(255, 255, 179, 71), [System.Drawing.Color]::FromArgb(255, 255, 90, 95))
+  $cols = @([System.Drawing.Color]::FromArgb(255, 70, 90, 120), [System.Drawing.Color]::FromArgb(255, 108, 130, 164), [System.Drawing.Color]::FromArgb(255, 150, 170, 200))
   for ($i = 0; $i -lt 3; $i++) {
     $b = New-Object System.Drawing.SolidBrush $cols[$i]
     $g.FillPath($b, (RR ((68 + $i * 42) * $s) (130 * $s) (28 * $s) (28 * $s) (8 * $s)))
   }
   # home bar
-  $pill = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(255, 245, 245, 247))
+  $pill = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(255, 40, 52, 72))
   $g.FillPath($pill, (RR (88 * $s) (196 * $s) (80 * $s) (12 * $s) (6 * $s)))
   $g.Dispose(); $bmp
 }
