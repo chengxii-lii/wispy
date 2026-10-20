@@ -20,7 +20,7 @@ function Draw([int]$size) {
   # dock capsule
   $cap = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(255, 58, 60, 72))
   $g.FillPath($cap, (RR (44 * $s) (118 * $s) (168 * $s) (52 * $s) (26 * $s)))
-  $cols = @([System.Drawing.Color]::FromArgb(255, 109, 93, 252), [System.Drawing.Color]::FromArgb(255, 76, 194, 255), [System.Drawing.Color]::FromArgb(255, 245, 179, 36))
+  $cols = @([System.Drawing.Color]::FromArgb(255, 255, 122, 26), [System.Drawing.Color]::FromArgb(255, 255, 179, 71), [System.Drawing.Color]::FromArgb(255, 255, 90, 95))
   for ($i = 0; $i -lt 3; $i++) {
     $b = New-Object System.Drawing.SolidBrush $cols[$i]
     $g.FillPath($b, (RR ((68 + $i * 42) * $s) (130 * $s) (28 * $s) (28 * $s) (8 * $s)))

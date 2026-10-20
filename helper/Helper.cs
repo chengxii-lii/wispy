@@ -1,4 +1,4 @@
-// tinybar-helper: native side of tinybar. Talks JSON lines over stdin/stdout.
+// neon-helper: native side of neon. Talks JSON lines over stdin/stdout.
 // Built with the in-box .NET Framework csc (C# 5), so no modern syntax in here.
 using System;
 using System.Collections.Concurrent;
@@ -164,7 +164,7 @@ static partial class Program
         stdout = new StreamWriter(Console.OpenStandardOutput(), new UTF8Encoding(false));
         stdout.AutoFlush = true;
         string appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-        string dir = Path.Combine(appData, "tinybar");
+        string dir = Path.Combine(appData, "neon");
         try { Directory.CreateDirectory(dir); } catch { }
         stateFile = Path.Combine(dir, "taskbar-state.txt");
 

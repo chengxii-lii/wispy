@@ -1,4 +1,4 @@
-// usage: node cdp.mjs "<js expression>"   (evaluates in the tinybar renderer on :9333)
+// usage: node cdp.mjs "<js expression>"   (evaluates in the neon renderer on :9333)
 const list = await (await fetch('http://127.0.0.1:9333/json')).json();
 const page = list.find((t) => t.type === 'page' && t.url.includes('index.html'));
 if (!page) { console.log('no page', list.map((t) => t.url)); process.exit(1); }

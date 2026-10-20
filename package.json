@@ -1,6 +1,6 @@
 {
-  "name": "tinybar",
-  "productName": "tinybar",
+  "name": "neon",
+  "productName": "neon",
   "version": "1.0.0",
   "private": true,
   "description": "A phone-style home bar that replaces the Windows taskbar: it rises to meet your cursor, opens into a dock, and holds search, quick settings and notifications.",
@@ -14,13 +14,13 @@
     "productivity",
     "customization"
   ],
-  "homepage": "https://github.com/chengxii-lii/tinybar#readme",
+  "homepage": "https://github.com/chengxii-lii/neon#readme",
   "bugs": {
-    "url": "https://github.com/chengxii-lii/tinybar/issues"
+    "url": "https://github.com/chengxii-lii/neon/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/chengxii-lii/tinybar.git"
+    "url": "git+https://github.com/chengxii-lii/neon.git"
   },
   "author": "ThinkTrout",
   "license": "MIT",

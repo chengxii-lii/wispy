@@ -1,4 +1,4 @@
-// tinybar-helper: input languages through TSF, and connecting paired Bluetooth audio devices.
+// neon-helper: input languages through TSF, and connecting paired Bluetooth audio devices.
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -79,7 +79,7 @@ interface IKsControl
 
 static partial class Program
 {
-    // false = leave the Win key to Windows (Start menu), true = tinybar takes the tap
+    // false = leave the Win key to Windows (Start menu), true = neon takes the tap
     static volatile bool winHijack = true;
     [DllImport("powrprof.dll")] static extern bool SetSuspendState(bool hibernate, bool force, bool wakeupEventsDisabled);
 

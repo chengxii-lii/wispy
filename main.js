@@ -1,4 +1,4 @@
-// tinybar main process: one transparent click-through window at the bottom of the
+// neon main process: one transparent click-through window at the bottom of the
 // primary display, a native helper for the OS-level bits, and the data the UI shows.
 const { app, BrowserWindow, screen, ipcMain, shell, Tray, Menu, nativeImage, systemPreferences, clipboard } = require('electron');
 const { spawn, execFile } = require('child_process');
@@ -9,14 +9,25 @@ const os = require('os');
 const { DatabaseSync } = require('node:sqlite');
 const SETTINGS = require('./settings-list');
 
+// neon was called tinybar before its public release: carry the old settings over, once
+(() => {
+  const dir = app.getPath('userData'), old = path.join(app.getPath('appData'), 'tinybar');
+  try {
+    fs.mkdirSync(dir, { recursive: true });
+    for (const f of ['config.json', 'pins.json', 'notifications.json']) {
+      if (!fs.existsSync(path.join(dir, f)) && fs.existsSync(path.join(old, f))) fs.copyFileSync(path.join(old, f), path.join(dir, f));
+    }
+  } catch (e) { /* nothing to carry over */ }
+})();
+
 const W = 920;
 const H = 700;
-const DEBUG_PORT = process.env.TINYBAR_DEBUG_PORT;
+const DEBUG_PORT = process.env.NEON_DEBUG_PORT;
 if (DEBUG_PORT) app.commandLine.appendSwitch('remote-debugging-port', DEBUG_PORT);
 app.commandLine.appendSwitch('disable-features', 'CalculateNativeWinOcclusion');
 
 if (!app.requestSingleInstanceLock()) { app.exit(0); }
-app.setAppUserModelId('com.thinktrout.tinybar');
+app.setAppUserModelId('com.thinktrout.neon');
 
 let win = null, tray = null, helper = null, helperBuf = '';
 let quitting = false, helperReady = false;
@@ -33,7 +44,7 @@ let lastVolume = null;
 let lastLang = null;
 let lastTray = [];
 
-const logFile = path.join(app.getPath('userData'), 'tinybar.log');
+const logFile = path.join(app.getPath('userData'), 'neon.log');
 function log(s) {
   try {
     const line = new Date().toISOString() + ' ' + s + '\n';
@@ -46,7 +57,7 @@ let searchSeq = 0;
 // ---------------------------------------------------------------- settings
 const DEFAULTS = {
   theme: 'auto', accent: 'system', glass: 46, iconSize: 46, magnify: 1.62,
-  edgeOpen: true, edge: 'med', delay: 35, keepOpen: false, winKey: 'tinybar', monitor: 'primary',
+  edgeOpen: true, edge: 'med', delay: 35, keepOpen: false, winKey: 'neon', monitor: 'primary',
   clock24: false, seconds: false, dateFmt: 'short',
   showTray: true, showLang: true, showBattPct: true, showTaskView: true, showDesktop: true,
   dnd: false, searchEngine: 'google',
@@ -64,7 +75,7 @@ try {
 function saveCfg() { try { fs.writeFileSync(cfgFile, JSON.stringify(cfg, null, 1)); } catch (e) { /* ignore */ } }
 function applyCfg(prev) {
   if (!prev || prev.monitor !== cfg.monitor) placeSoon();
-  if (!prev || prev.winKey !== cfg.winKey) send({ cmd: 'winHijack', on: cfg.winKey === 'tinybar' });
+  if (!prev || prev.winKey !== cfg.winKey) send({ cmd: 'winHijack', on: cfg.winKey === 'neon' });
 }
 function setConfig(patch) {
   const prev = { ...cfg };
@@ -88,11 +99,11 @@ const iconInflight = new Map();    // key -> Promise
 fs.mkdirSync(iconDir, { recursive: true });
 
 // ---------------------------------------------------------------- helper
-function helperPath() { return path.join(__dirname, 'helper', 'tinybar-helper.exe'); }
+function helperPath() { return path.join(__dirname, 'helper', 'neon-helper.exe'); }
 
 function startHelper() {
   helperReady = false;
-  helper = spawn(helperPath(), ['--self', process.execPath, ...(process.env.TINYBAR_TEST ? ['--test-injected'] : [])], { stdio: ['pipe', 'pipe', 'ignore'], windowsHide: true });
+  helper = spawn(helperPath(), ['--self', process.execPath, ...(process.env.NEON_TEST ? ['--test-injected'] : [])], { stdio: ['pipe', 'pipe', 'ignore'], windowsHide: true });
   helper.stdout.setEncoding('utf8');
   helper.stdout.on('data', (chunk) => {
     helperBuf += chunk;
@@ -129,7 +140,7 @@ function onHelper(m) {
       helperReady = true;
       send({ cmd: 'hideTaskbar' });
       send({ cmd: 'bannersOff' });
-      send({ cmd: 'winHijack', on: cfg.winKey === 'tinybar' });
+      send({ cmd: 'winHijack', on: cfg.winKey === 'neon' });
       break;
     case 'lang': lastLang = m; toRenderer('lang', m); break;
     case 'tray':
@@ -362,8 +373,8 @@ async function readPinned() {
   pinned = applyUserPins(windowsPins);
 }
 
-// ---------------------------------------------------------------- tinybar's own pins
-// Windows has no API for other apps to pin to its taskbar, so pins added or removed in tinybar
+// ---------------------------------------------------------------- neon's own pins
+// Windows has no API for other apps to pin to its taskbar, so pins added or removed in neon
 // live in pins.json and are layered over the pins Windows already has.
 let windowsPins = [];
 const pinsFile = path.join(app.getPath('userData'), 'pins.json');
@@ -763,7 +774,7 @@ ipcMain.handle('icon', async (_e, src, key) => {
 
 
 // ---------------------------------------------------------------- notifications
-// Windows keeps every toast it shows in wpndatabase.db. Watch it and mirror new ones as tinybar banners.
+// Windows keeps every toast it shows in wpndatabase.db. Watch it and mirror new ones as neon banners.
 const wpnDir = path.join(process.env.LOCALAPPDATA || '', 'Microsoft', 'Windows', 'Notifications');
 const notifs = new Map();
 let lastNotifId = -1, wpnSig = '';
@@ -797,7 +808,7 @@ function pollNotifs() {
   let sig = '';
   try { sig = ['wpndatabase.db', 'wpndatabase.db-wal'].map((f) => fs.statSync(path.join(wpnDir, f)).mtimeMs).join('|'); } catch (e) { return; }
   if (sig === wpnSig) return;
-  const tmp = path.join(os.tmpdir(), 'tinybar-wpn');
+  const tmp = path.join(os.tmpdir(), 'neon-wpn');
   let db;
   try {
     fs.mkdirSync(tmp, { recursive: true });
@@ -944,7 +955,7 @@ ipcMain.handle('wifi-join', async (_e, ssid, password, auth) => {
     ${open ? '' : `<sharedKey><keyType>passPhrase</keyType><protected>false</protected><keyMaterial>${xmlEsc(password)}</keyMaterial></sharedKey>`}
   </security></MSM>
 </WLANProfile>`;
-    const file = path.join(os.tmpdir(), 'tinybar-wlan-' + crypto.randomBytes(6).toString('hex') + '.xml');
+    const file = path.join(os.tmpdir(), 'neon-wlan-' + crypto.randomBytes(6).toString('hex') + '.xml');
     try {
       fs.writeFileSync(file, xml);
       const r = await run('netsh', ['wlan', 'add', 'profile', 'filename=' + file, 'user=current']);
@@ -999,7 +1010,7 @@ ipcMain.on('set-brightness', (_e, v) => { brightNext = Math.round(v); pumpBright
 ipcMain.on('volume', (_e, o) => send({ cmd: 'volume', ...o }));
 ipcMain.on('open-settings', (_e, uri) => shell.openExternal(uri));
 
-// power menu. TINYBAR_DRYRUN=1 only logs, so this can be tested without turning the PC off
+// power menu. NEON_DRYRUN=1 only logs, so this can be tested without turning the PC off
 ipcMain.on('power', (_e, act) => {
   const cmds = {
     lock: ['rundll32.exe', ['user32.dll,LockWorkStation']],
@@ -1007,7 +1018,7 @@ ipcMain.on('power', (_e, act) => {
     restart: ['shutdown.exe', ['/r', '/t', '0']],
     shutdown: ['shutdown.exe', ['/s', '/t', '0']],
   };
-  if (process.env.TINYBAR_DRYRUN) { log('power (dry run): ' + act); return; }
+  if (process.env.NEON_DRYRUN) { log('power (dry run): ' + act); return; }
   if (act === 'sleep') { send({ cmd: 'sleep' }); return; }
   const c = cmds[act];
   if (c) execFile(c[0], c[1], { windowsHide: true }, () => {});
@@ -1038,7 +1049,7 @@ ipcMain.handle('init', () => ({
 }));
 
 function accent() {
-  try { return '#' + systemPreferences.getAccentColor().slice(0, 6); } catch (e) { return '#4cc2ff'; }
+  try { return '#' + systemPreferences.getAccentColor().slice(0, 6); } catch (e) { return '#ff7a1a'; }
 }
 systemPreferences.on && systemPreferences.on('accent-color-changed', () => toRenderer('accent', accent()));
 
@@ -1046,9 +1057,9 @@ systemPreferences.on && systemPreferences.on('accent-color-changed', () => toRen
 function createTray() {
   const img = nativeImage.createFromPath(path.join(__dirname, 'assets', 'tray.png'));
   tray = new Tray(img);
-  tray.setToolTip('tinybar');
+  tray.setToolTip('neon');
   const build = () => Menu.buildFromTemplate([
-    { label: 'Open tinybar', click: () => openFromKey() },
+    { label: 'Open neon', click: () => openFromKey() },
     { type: 'separator' },
     {
       label: 'Launch at login', type: 'checkbox', enabled: app.isPackaged,

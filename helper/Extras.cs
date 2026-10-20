@@ -1,4 +1,4 @@
-// tinybar-helper extras: audio devices + per-app volume, input languages, the tray-icon host,
+// neon-helper extras: audio devices + per-app volume, input languages, the tray-icon host,
 // and Windows banner suppression. C# 5 (in-box csc), same as Helper.cs.
 using System;
 using System.Collections.Generic;
@@ -134,11 +134,11 @@ static partial class Program
 {
     // ================================================================ start / dispatch
     static string bannerFile;
-    static readonly string trayDir = Path.Combine(Path.GetTempPath(), "tinybar-tray");
+    static readonly string trayDir = Path.Combine(Path.GetTempPath(), "neon-tray");
 
     static void StartExtras()
     {
-        bannerFile = Path.Combine(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "tinybar"), "banners.txt");
+        bannerFile = Path.Combine(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "neon"), "banners.txt");
         try { Directory.CreateDirectory(trayDir); } catch { }
         try { StartTrayHost(); } catch { }
         System.Windows.Forms.Timer t = new System.Windows.Forms.Timer();
@@ -309,7 +309,7 @@ static partial class Program
 
     // ================================================================ tray host
     // We register our own Shell_TrayWnd above Explorer's, so Shell_NotifyIcon calls reach us first.
-    // Everything is forwarded to Explorer unchanged, so quitting tinybar loses nothing.
+    // Everything is forwarded to Explorer unchanged, so quitting neon loses nothing.
     static IntPtr trayHost = IntPtr.Zero;
     static NX.WndProc trayProc = TrayProc;
     static uint taskbarCreatedMsg;
@@ -490,7 +490,7 @@ static partial class Program
     }
 
     // ================================================================ Windows notification banners
-    // tinybar shows notifications itself, so turn off Windows' own banners per app while it runs.
+    // neon shows notifications itself, so turn off Windows' own banners per app while it runs.
     // The original values are kept in a file (survives a crash) and put back on quit.
     const string NotifKey = @"Software\Microsoft\Windows\CurrentVersion\Notifications\Settings";
 

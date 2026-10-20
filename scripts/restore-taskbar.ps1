@@ -1,6 +1,12 @@
-# Emergency exit: stops tinybar and gives the Windows taskbar back.
+# Emergency exit: stops neon and gives the Windows taskbar back.
 # Run this if the taskbar is ever missing (right-click the file > Run with PowerShell, or Win+R: powershell -File <this file>).
-Get-Process tinybar, tinybar-helper -ErrorAction SilentlyContinue | Stop-Process -Force
+Get-Process neon, neon-helper, tinybar, tinybar-helper -ErrorAction SilentlyContinue | Stop-Process -Force   # tinybar: neon's name before release
+# neon's saved state lives in %APPDATA%\neon (older builds used %APPDATA%\tinybar)
+function Find-State($file) {
+  $dir = @('neon', 'tinybar') | ForEach-Object { Join-Path $env:APPDATA $_ } | Where-Object { Test-Path (Join-Path $_ $file) } | Select-Object -First 1
+  if (-not $dir) { $dir = Join-Path $env:APPDATA 'neon' }
+  Join-Path $dir $file
+}
 
 Add-Type @"
 using System;
@@ -19,8 +25,8 @@ if ($tray -ne [IntPtr]::Zero) { [void][TB]::ShowWindow($tray, 8) }
 $sec = [IntPtr]::Zero
 while (($sec = [TB]::FindWindowEx([IntPtr]::Zero, $sec, 'Shell_SecondaryTrayWnd', $null)) -ne [IntPtr]::Zero) { [void][TB]::ShowWindow($sec, 8) }
 
-# put auto-hide back to what it was before tinybar (or off if we have no record)
-$stateFile = Join-Path $env:APPDATA 'tinybar\taskbar-state.txt'
+# put auto-hide back to what it was before neon (or off if we have no record)
+$stateFile = Find-State 'taskbar-state.txt'
 $orig = 0
 if (Test-Path $stateFile) { $orig = [int](Get-Content $stateFile -Raw).Trim() }
 $d = New-Object TB+ABD
@@ -29,8 +35,8 @@ $d.cb = [System.Runtime.InteropServices.Marshal]::SizeOf($d); $d.h = $tray; $d.l
 Remove-Item $stateFile -ErrorAction SilentlyContinue
 Write-Host 'Windows taskbar restored.'
 
-# turn Windows' own notification banners back on the way they were before tinybar
-$bannerFile = Join-Path $env:APPDATA 'tinybar\banners.txt'
+# turn Windows' own notification banners back on the way they were before neon
+$bannerFile = Find-State 'banners.txt'
 if (Test-Path $bannerFile) {
   $root = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Notifications\Settings'
   foreach ($line in Get-Content $bannerFile) {

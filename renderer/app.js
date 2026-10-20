@@ -1,4 +1,4 @@
-// tinybar renderer: spring-driven bar, two cursor zones, dock magnification, search, quick settings.
+// neon renderer: spring-driven bar, two cursor zones, dock magnification, search, quick settings.
 (() => {
   'use strict';
   const $ = (s, r = document) => r.querySelector(s);
@@ -52,16 +52,16 @@
   // ---------------------------------------------------------------- settings applied to the UI
   let cfg = {
     theme: 'auto', accent: 'system', glass: 46, iconSize: 46, magnify: 1.62,
-    edgeOpen: true, edge: 'med', delay: 35, keepOpen: false, winKey: 'tinybar', monitor: 'primary',
+    edgeOpen: true, edge: 'med', delay: 35, keepOpen: false, winKey: 'neon', monitor: 'primary',
     clock24: false, seconds: false, dateFmt: 'short',
     showTray: true, showLang: true, showBattPct: true, showTaskView: true, showDesktop: true,
     dnd: false, searchEngine: 'google',
   };
-  let sysAccent = '#4cc2ff';
+  let sysAccent = '#ff7a1a';
   const rootEl = document.documentElement;
   function inkFor(hex) {
     const n = parseInt(hex.slice(1), 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255;
-    return (0.299 * r + 0.587 * g + 0.114 * b) > 165 ? '#06121a' : '#ffffff';
+    return (0.299 * r + 0.587 * g + 0.114 * b) > 150 ? '#1a0b02' : '#ffffff';
   }
   function applyConfig(c) {
     Object.assign(cfg, c);
@@ -943,7 +943,7 @@
   });
 
   // ---------------------------------------------------------------- settings panel
-  const SWATCHES = ['#4cc2ff', '#7c8cff', '#a78bfa', '#34d399', '#fbbf24', '#fb7185'];
+  const SWATCHES = ['#ff7a1a', '#4cc2ff', '#7c8cff', '#a78bfa', '#34d399', '#fb7185'];
   const SCHEMA = [
     { title: 'Appearance', rows: [
       { k: 'theme', label: 'Theme', t: 'seg', opts: [['auto', 'Auto'], ['dark', 'Dark'], ['light', 'Light']] },
@@ -957,7 +957,7 @@
       { k: 'edge', label: 'Edge sensitivity', t: 'seg', opts: [['low', 'Low'], ['med', 'Medium'], ['high', 'High']] },
       { k: 'delay', label: 'Open delay', t: 'range', min: 0, max: 400, step: 5, fmt: (v) => v + ' ms' },
       { k: 'keepOpen', label: 'Always show the dock', t: 'switch' },
-      { k: 'winKey', label: 'Windows key', t: 'seg', opts: [['tinybar', 'Open tinybar'], ['start', 'Start menu']] },
+      { k: 'winKey', label: 'Windows key', t: 'seg', opts: [['neon', 'Open neon'], ['start', 'Start menu']] },
       { k: 'monitor', label: 'Show on', t: 'monitor' },
     ] },
     { title: 'Clock and buttons', rows: [
@@ -1132,17 +1132,17 @@
       m.running && m.canEnd && { label: 'End task', icon: 'i-trash', danger: true, fn: act('end') },
     ], { title: m.name, icon: m.icon });
   }
-  async function tinybarMenu(x, y) {
+  async function neonMenu(x, y) {
     const i = await tb.menuInfo();
     showMenu(x, y, [
-      { label: 'tinybar settings', icon: 'i-gear', fn: () => toggleMode('settings') },
+      { label: 'neon settings', icon: 'i-gear', fn: () => toggleMode('settings') },
       { sep: true },
       i.packaged && { label: 'Launch at login', icon: 'i-power', checked: !!i.login, keep: true,
         fn: (b) => { const sw = b.querySelector('.switch'); const on = !sw.classList.contains('on'); sw.classList.toggle('on', on); tb.setLogin(on); } },
       { label: 'Notification settings', icon: 'i-bell', fn: () => settings('ms-settings:notifications') },
       { sep: true },
-      { label: 'Quit tinybar', icon: 'i-x', danger: true, fn: () => tb.quit() },
-    ], { title: 'tinybar' });
+      { label: 'Quit neon', icon: 'i-x', danger: true, fn: () => tb.quit() },
+    ], { title: 'neon' });
   }
   document.addEventListener('contextmenu', (e) => {
     e.preventDefault();
@@ -1203,7 +1203,7 @@
       return;
     }
     if (t.closest('#tray-btn, #p-tray')) return; // tray icons open their own app's menu
-    if (t.closest('#row, #bar, #items')) tinybarMenu(x, y);
+    if (t.closest('#row, #bar, #items')) neonMenu(x, y);
   });
 
   // ---------------------------------------------------------------- notification center + calendar
@@ -1366,7 +1366,7 @@
   }
   tb.on('notify', addToast);
   tb.on('close-failed', (f) => addToast({
-    id: -1, app: 'tinybar', icon: null, title: `${f.name} didn’t close`,
+    id: -1, app: 'neon', icon: null, title: `${f.name} didn’t close`,
     body: 'It may be asking to save, or running in the background.',
     action: f.canEnd ? { label: 'End task', fn: () => tb.appAction(f.id, 'end') } : null,
   }));
@@ -1412,10 +1412,10 @@
     try {
       if (!localStorage.getItem('tb-hint')) {
         localStorage.setItem('tb-hint', '1');
-        setTimeout(() => addToast({ id: -2, app: 'tinybar', icon: null, title: 'Make it yours', body: 'Right-click the bar and choose tinybar settings.' }), 2500);
+        setTimeout(() => addToast({ id: -2, app: 'neon', icon: null, title: 'Make it yours', body: 'Right-click the bar and choose neon settings.' }), 2500);
       }
     } catch (e) { /* storage unavailable */ }
   });
   let simT = 0;
-  window.__tinybar = { S, sp, openBar, closeBar, setMode, advance(ms) { for (let i = 0; i < ms / 16; i++) { simT += 16; update(.016, performance.now() + simT); } } };
+  window.__neon = { S, sp, openBar, closeBar, setMode, advance(ms) { for (let left = ms; left > 0.01; left -= 16) { const d = Math.min(16, left); simT += d; update(d / 1000, performance.now() + simT); } } };
 })();
