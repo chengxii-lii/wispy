@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.0.2
+
+- **No more frozen bar after a graphics crash.** If Windows resets the graphics driver, wispy now reloads its window instead of staying unclickable.
+- **A cleaner entry in Settings, Apps.** It reads just "wispy", and installing over an older copy tidies up the leftover uninstall script.
+- **Repo.** The launch page's sky is lighter on the GPU.
+
 ## v1.0.1
 
 - **A proper installer.** Download `wispy-setup.exe` and run it: no unzipping, no admin rights, a Start Menu shortcut, optional launch at sign-in, and wispy shows up in Settings, Apps so you can uninstall it there (it gives your taskbar back and offers to delete your settings).
