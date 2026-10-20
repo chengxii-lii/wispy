@@ -1,0 +1,15 @@
+{
+  "name": "tinybar-art",
+  "private": true,
+  "description": "Renders tinybar's README art: a ShaderGradient backdrop with the real UI on top.",
+  "dependencies": {
+    "@react-three/fiber": "^8.18.0",
+    "@shadergradient/react": "2.4.20",
+    "esbuild": "^0.25.0",
+    "gifenc": "^1.0.3",
+    "pngjs": "^7.0.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "three": "^0.169.0"
+  }
+}
