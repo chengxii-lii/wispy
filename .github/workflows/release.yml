@@ -8,7 +8,6 @@ on:
 
 permissions:
   contents: write
-  actions: read   # SignPath reads the uploaded artifact
 
 jobs:
   release:
@@ -31,53 +30,6 @@ jobs:
       - run: npm test
       - run: npm run helper
       - run: npm run pack
-
-      # Code signing (SignPath Foundation). Skipped until the repo variable SIGNPATH_ORGANIZATION_ID exists,
-      # so releases keep building unsigned. Setup: docs/code-signing.md
-      - name: Collect the programs to sign
-        if: ${{ vars.SIGNPATH_ORGANIZATION_ID != '' }}
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Force to-sign | Out-Null
-          Copy-Item dist/wispy-win32-x64/wispy.exe to-sign/
-          Copy-Item dist/wispy-win32-x64/resources/app/helper/wispy-helper.exe to-sign/
-
-      - name: Upload them for signing
-        id: unsigned
-        if: ${{ vars.SIGNPATH_ORGANIZATION_ID != '' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: unsigned
-          path: to-sign/*
-
-      - name: Sign with SignPath
-        if: ${{ vars.SIGNPATH_ORGANIZATION_ID != '' }}
-        uses: signpath/github-action-submit-signing-request@v1
-        with:
-          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
-          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
-          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
-          signing-policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG }}
-          github-artifact-id: ${{ steps.unsigned.outputs.artifact-id }}
-          wait-for-completion: true
-          output-artifact-directory: signed
-
-      - name: Put the signed programs back and verify them
-        if: ${{ vars.SIGNPATH_ORGANIZATION_ID != '' }}
-        shell: pwsh
-        run: |
-          Get-ChildItem signed -Filter *.zip -ErrorAction SilentlyContinue | ForEach-Object { Expand-Archive $_.FullName signed -Force }
-          $targets = @{
-            'wispy.exe'        = 'dist/wispy-win32-x64/wispy.exe'
-            'wispy-helper.exe' = 'dist/wispy-win32-x64/resources/app/helper/wispy-helper.exe'
-          }
-          foreach ($name in $targets.Keys) {
-            Copy-Item "signed/$name" $targets[$name] -Force
-            $sig = Get-AuthenticodeSignature $targets[$name]
-            if ($sig.Status -ne 'Valid') { throw "$name is not validly signed: $($sig.Status)" }
-            Write-Host "$name signed by $($sig.SignerCertificate.Subject)"
-          }
-
       - run: npm run zip
 
       - name: Draft the release
