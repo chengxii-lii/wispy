@@ -84,6 +84,9 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: def
 .item.gone { display: none; }
 .item img, .item .ph { width: 100%; height: 100%; display: block; object-fit: contain; -webkit-user-drag: none; filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .28)); }
 .item .ph { border-radius: 22%; background: var(--raised-2); }
+.item img, .item .ph { transition: opacity .3s var(--ease), transform .35s var(--ease); transform-origin: 50% 100%; }
+.item.closing { pointer-events: none; }
+.item.closing img, .item.closing .ph { opacity: .35; transform: scale(.84); }
 .item .dot { position: absolute; left: 50%; bottom: -7px; width: 4px; height: 4px; margin-left: -2px; border-radius: 3px; background: var(--faint); opacity: 0; transition: opacity .2s, width .25s var(--ease), margin .25s var(--ease), background .2s; }
 .item.run .dot { opacity: 1; }
 .item.active .dot { width: 14px; margin-left: -7px; background: var(--accent); }

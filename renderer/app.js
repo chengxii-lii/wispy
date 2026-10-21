@@ -146,7 +146,15 @@
   function setDock(list) {
     if (drag && drag.moved) { pendingDock = list; return; }
     const ids = new Set(list.map((i) => i.id));
-    for (const [id, it] of items) if (!ids.has(id)) { it.el.remove(); items.delete(id); }
+    // an app that just closed lingers for a moment, dimmed, so you can see it go (instead of vanishing)
+    const prevIdx = new Map(order.map((o, i) => [o, i]));
+    for (const [id, it] of items) {
+      if (ids.has(id)) continue;
+      if (!it.ghost) {
+        it.ghost = true; it.el.classList.add('closing'); it.el.classList.remove('run', 'active');
+        it.ghostTimer = setTimeout(() => dropGhost(it), CLOSE_LINGER);
+      }
+    }
     order = [];
     list.forEach((d) => {
       let it = items.get(d.id);
@@ -167,6 +175,12 @@
         items.set(d.id, it);
         itemsEl.appendChild(el);
       }
+      if (it.ghost) { it.ghost = false; clearTimeout(it.ghostTimer); it.el.classList.remove('closing'); }   // it came back
+      // a pinned app whose last window just closed dims for a moment too
+      if (it.data && it.data.running > 0 && !(d.running > 0) && d.pinned) {
+        it.el.classList.add('closing'); clearTimeout(it.fadeTimer);
+        it.fadeTimer = setTimeout(() => { if (!it.ghost) it.el.classList.remove('closing'); }, CLOSE_LINGER);
+      }
       it.pinned = d.pinned;
       it.data = d;
       it.tip.textContent = d.name;
@@ -186,12 +200,24 @@
       }
       order.push(it);
     });
+    // closing apps keep their slot until the linger ends
+    for (const it of items.values()) {
+      if (it.ghost) order.splice(Math.min(prevIdx.has(it) ? prevIdx.get(it) : order.length, order.length), 0, it);
+    }
     // keep DOM order and the divider between pinned and running-only apps
     if (!dividerEl) { dividerEl = document.createElement('span'); dividerEl.className = 'divider'; }
     const firstExtra = order.findIndex((i) => !i.pinned);
     dividerAt = firstExtra > 0 ? firstExtra : -1;
     placeItems();
     wake();
+  }
+
+  const CLOSE_LINGER = 900;
+  function dropGhost(it) {
+    if (items.get(it.id) !== it || !it.ghost) return;
+    it.el.remove(); items.delete(it.id);
+    order = order.filter((o) => o !== it);
+    placeItems(); wake();
   }
 
   // keep the DOM in step with `order`, with the divider between pinned and running-only apps
