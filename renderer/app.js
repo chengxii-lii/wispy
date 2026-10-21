@@ -18,7 +18,7 @@
   let Z2 = 12;          // distance from the screen's bottom edge: peek zone, open zone
   const ZX1 = 300, ZX2 = 210;        // how far from centre each zone reaches sideways
   let DWELL = 35;
-  let LEAVE = 750;      // how long the cursor must stay away before the dock closes (the 'Close delay' setting)
+  let LEAVE = 35;      // how long the cursor must stay away before the dock closes (the 'Close delay' setting)
 
   class Spring {
     constructor(x, freq, zeta) { this.x = x; this.v = 0; this.w = 2 * Math.PI * freq; this.z = zeta; }
@@ -76,7 +76,7 @@
     BASE = cfg.iconSize; DOCK_H = BASE + PAD * 2; MAXS = cfg.magnify;
     Z2 = { low: 6, med: 12, high: 24 }[cfg.edge] || 12;
     DWELL = cfg.delay;
-    LEAVE = typeof cfg.closeDelay === 'number' ? cfg.closeDelay : 750;
+    LEAVE = typeof cfg.closeDelay === 'number' ? cfg.closeDelay : 35;
     const rc = row.classList;
     rc.toggle('no-tray', !cfg.showTray); rc.toggle('no-lang', !cfg.showLang); rc.toggle('no-pct', !cfg.showBattPct);
     rc.toggle('no-taskview', !cfg.showTaskView); rc.toggle('no-desk', !cfg.showDesktop); rc.toggle('no-date', cfg.dateFmt === 'off');
@@ -113,7 +113,8 @@
         if (now - S.dwellAt > DWELL) openBar(false);
       } else S.dwellAt = 0;
     } else {
-      const hold = cfg.keepOpen || S.pinned || S.mode !== 'dock' || S.searching || S.dragging || S.ctx || q.value;
+      // while an app's icon plays its close animation the dock stays up, whatever the close delay is
+      const hold = cfg.keepOpen || S.pinned || S.mode !== 'dock' || S.searching || S.dragging || S.ctx || q.value || now < (S.holdUntil || 0);
       const keepX = barHalfWidth() + 56, keepTop = DOCK_BOTTOM + DOCK_H + 64;
       const keep = hold || (S.inside && dx < keepX && d < keepTop);
       if (keep) S.leaveAt = 0;
@@ -163,7 +164,7 @@
     for (const [id, it] of items) {
       if (ids.has(id)) continue;
       if (!it.ghost) {
-        it.ghost = true; it.el.classList.add('closing'); it.el.classList.remove('run', 'active');
+        it.ghost = true; S.holdUntil = performance.now() + CLOSE_ANIM; it.el.classList.add('closing'); it.el.classList.remove('run', 'active');
         it.ghostTimer = setTimeout(() => dropGhost(it), CLOSE_LINGER);
       }
     }
@@ -194,7 +195,7 @@
       const wasRunning = !!(it.data && it.data.running > 0);
       // a pinned app whose last window just closed dims for a moment too
       if (wasRunning && !(d.running > 0) && d.pinned) {
-        it.el.classList.add('closing'); clearTimeout(it.fadeTimer);
+        it.el.classList.add('closing'); S.holdUntil = performance.now() + CLOSE_ANIM; clearTimeout(it.fadeTimer);
         it.fadeTimer = setTimeout(() => { if (!it.ghost) it.el.classList.remove('closing'); }, CLOSE_LINGER);
       }
       it.pinned = d.pinned;
@@ -246,7 +247,8 @@
   }
   function stopLaunching(it) { it.launching = false; clearTimeout(it.launchT); it.el.classList.remove('launching'); }
 
-  const CLOSE_LINGER = 900;
+  const CLOSE_LINGER = 900;   // how long a closed app's slot stays, dimmed
+  const CLOSE_ANIM = 500;     // the icon's close animation (style.css, closeout): the dock stays up at least this long
   function dropGhost(it) {
     if (items.get(it.id) !== it || !it.ghost) return;
     it.el.remove(); items.delete(it.id);
@@ -1055,7 +1057,7 @@
       { k: 'edgeOpen', label: 'Open when the cursor touches the edge', t: 'switch' },
       { k: 'edge', label: 'Edge sensitivity', t: 'seg', opts: [['low', 'Low'], ['med', 'Medium'], ['high', 'High']] },
       { k: 'delay', label: 'Open delay', t: 'range', min: 0, max: 400, step: 5, fmt: (v) => v + ' ms' },
-      { k: 'closeDelay', label: 'Close delay', t: 'range', min: 0, max: 2000, step: 50, fmt: (v) => (v === 0 ? 'Instant' : v + ' ms') },
+      { k: 'closeDelay', label: 'Close delay', t: 'range', min: 0, max: 1500, step: 5, fmt: (v) => (v === 0 ? 'Instant' : v + ' ms') },
       { k: 'keepOpen', label: 'Always show the dock', t: 'switch' },
       { k: 'winKey', label: 'Windows key', t: 'seg', opts: [['wispy', 'Open wispy'], ['start', 'Start menu']] },
       { k: 'monitor', label: 'Show on', t: 'monitor' },
