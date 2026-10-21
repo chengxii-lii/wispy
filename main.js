@@ -234,11 +234,14 @@ function createWindow() {
   win.on('resized', () => { if (boundsOff(win.getBounds(), wantedBounds())) placeWindow(); });
   // belt and braces: lid closed, monitor hot-plugged while asleep, resolution changed elsewhere
   setInterval(() => { if (win && !win.isDestroyed() && boundsOff(win.getBounds(), wantedBounds())) placeWindow(); }, 2000);
-  setInterval(pollCursor, 10);
+  // 100 Hz while the cursor is anywhere near the bar (or it is open), 40 Hz while it is far away: idle wispy then costs a
+  // quarter of the wakeups, and the first tick inside the near band still comes with plenty of distance left to react
+  const pollLoop = () => { let fast = true; try { fast = pollCursor(); } catch (e) { /* keep polling */ } setTimeout(pollLoop, fast ? 10 : 25); };
+  pollLoop();
 }
 
 function pollCursor() {
-  if (!win || win.isDestroyed()) return;
+  if (!win || win.isDestroyed()) return false;
   const p = screen.getCursorScreenPoint();
   if (cfg.monitor === 'follow' && !barOpen) {
     // hop to another screen only when the cursor touches its bottom edge, never mid-use
@@ -250,9 +253,11 @@ function pollCursor() {
   const inside = x >= 0 && x < b.width && y >= 0 && y < b.height;
   if (!inside) { x = -1; y = -1; }
   const key = x + ',' + y;
-  if (key === lastCursor) return;
+  const near = barOpen || fullscreen === false && inside && y > b.height - 380;
+  if (key === lastCursor) return near;
   lastCursor = key;
   toRenderer('cursor', x, y);
+  return near;
 }
 
 async function takeFocus() {

@@ -190,6 +190,28 @@ for (const term of ['mu', 'note', 'set', 'a']) {
   });
 }
 
+await group('search: hover responds at once', async (p) => {
+  await edge(p); await searchFor(p, 'a');
+  const [x, y] = await centre(p, '#p-search .res', 3);
+  await move(p, x - 30, y); await sleep(200);
+  await move(p, x, y);
+  await sleep(50);
+  const at50 = await p.eval(`document.querySelector('#p-search .res.sel').dataset.i`);
+  check('the highlight is on the hovered row within 50 ms', at50 === '3', 'row ' + at50);
+  await sleep(250);
+  const pane = await p.eval(`document.querySelector('#p-search .sp-hero b').textContent`);
+  const row = await p.eval(`document.querySelectorAll('#p-search .res')[3].querySelector('b').textContent`);
+  check('and the pane follows once the pointer rests', pane === row, pane + ' / ' + row);
+  // sweep down the list: the highlight must track the pointer row for row
+  let tracked = 0, total = 0;
+  for (let i = 0; i < 6; i++) {
+    const [rx, ry] = await centre(p, '#p-search .res', i);
+    await move(p, rx, ry); await sleep(40);
+    total++; if ((await p.eval(`document.querySelector('#p-search .res.sel').dataset.i`)) === String(i)) tracked++;
+  }
+  check('the highlight tracks the pointer down the list', tracked === total, `${tracked}/${total}`);
+});
+
 await group('search: moving to an action button across other rows', async (p) => {
   await edge(p); await searchFor(p, 'mu');
   const [rx, ry] = await centre(p, '#p-search .res', 0);

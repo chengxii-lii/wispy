@@ -463,7 +463,7 @@
 
   // ---------------------------------------------------------------- search
   let results = [], fileResults = [], sel = 0, seq = 0;
-  const iconMem = new Map();
+  const iconMem = new Map(), iconFail = new Map();
   const KIND_BONUS = { app: 8, command: 4, setting: 0, file: -6 };
 
   function compose() {
@@ -494,7 +494,7 @@
   }
   // The panel is built once and then patched in place. Rewriting its HTML on every hover or icon arrival used to
   // replace the very button under your cursor between mouse-down and mouse-up, so clicks were lost and the pane flickered.
-  let sh = null, rowsKey = '', heroHtml = '', actsHtml = '';
+  let sh = null, rowsKey = '', heroHtml = '', actsHtml = '', paneIdx = 0;
   function shell() {
     if (sh && panels.search.contains(sh.list)) return sh;
     panels.search.innerHTML = '<div class="sr"><div class="sr-list"></div><aside class="sr-pane"><div class="sp-hero"></div><div class="sp-acts"></div></aside></div>';
@@ -519,6 +519,7 @@
       if (rico._h !== ic) { rico.innerHTML = ic; rico._h = ic; }
     });
     const r = list[sel];
+    paneIdx = sel;
     const pk = r.kind + ':' + r.title + ':' + (r.path || r.id || '');
     const fresh = pk !== paneKey;
     paneKey = pk;
@@ -537,8 +538,9 @@
     // fetch missing icons for apps and files; they are patched into place when they arrive
     list.forEach((x) => {
       if (!x.iconKey || iconMem.has(x.iconKey)) return;
+      if (iconFail.get(x.iconKey) > Date.now() - 8000) return;     // asked and got nothing: don't ask the helper again on every hover
       iconMem.set(x.iconKey, null);
-      tb.icon(x.iconSrc, x.iconKey).then((u) => { if (u) { iconMem.set(x.iconKey, u); if (S.mode === 'search') renderResults(); } else iconMem.delete(x.iconKey); });
+      tb.icon(x.iconSrc, x.iconKey).then((u) => { if (u) { iconMem.set(x.iconKey, u); if (S.mode === 'search') renderResults(); } else { iconMem.delete(x.iconKey); iconFail.set(x.iconKey, Date.now()); } });
     });
     panels.search.currentList = list;
   }
@@ -583,20 +585,28 @@
   });
   async function focusSearch() { await tb.focusMe(); S.searching = true; S.wantFocus = true; q.focus(); wake(); }
 
-  // Hovering a result selects it, but only once the pointer rests on it for a moment and has really moved: the pointer
-  // crossing other rows on its way to an action button must not swap the pane, and a layout change under a resting
-  // pointer (which browsers report as a mouse move) must not undo a keyboard selection.
-  let hoverI = -1, hoverT = 0, lastMX = -1, lastMY = -1;
+  // The highlight follows the pointer at once (a class toggle, nothing to rebuild), so hovering feels immediate. The
+  // pane on the right (actions) catches up once the pointer rests on a row; and when the pointer moves into the pane
+  // the selection returns to the result whose actions are shown, so crossing other rows on the way to a button never
+  // changes what you are about to click. A layout change under a resting pointer (browsers report it as a move) must
+  // not undo a keyboard selection, hence the coordinate check.
+  let hoverT = 0, lastMX = -1, lastMY = -1;
+  function markSel() { const kids = sh && sh.list.children; if (kids) for (let k = 0; k < kids.length; k++) kids[k].classList.toggle('sel', k === sel); }
   panels.search.addEventListener('mousemove', (e) => {
     if (e.clientX === lastMX && e.clientY === lastMY) return;
     lastMX = e.clientX; lastMY = e.clientY;
     const r = e.target.closest('.res');
-    const i = r ? +r.dataset.i : -1;
-    hoverI = i; clearTimeout(hoverT);      // every movement restarts the wait: only a pointer that pauses on a row selects it
-    if (i < 0 || i === sel) return;
-    hoverT = setTimeout(() => { if (hoverI === i && S.mode === 'search') { sel = i; renderResults(); } }, 90);
-  });
-  panels.search.addEventListener('mouseleave', () => { hoverI = -1; clearTimeout(hoverT); });
+    if (r) {
+      const i = +r.dataset.i;
+      if (i !== sel) { sel = i; markSel(); }
+      clearTimeout(hoverT);
+      if (sel !== paneIdx) hoverT = setTimeout(() => { if (S.mode === 'search') renderResults(); }, 70);
+    } else if (e.target.closest('.sr-pane')) {
+      clearTimeout(hoverT);
+      if (sel !== paneIdx) { sel = paneIdx; markSel(); }
+    }
+  }, { passive: true });
+  panels.search.addEventListener('mouseleave', () => clearTimeout(hoverT));
   panels.search.addEventListener('mousedown', (e) => e.preventDefault());   // clicking an option keeps typing focus in the search box
   panels.search.addEventListener('click', (e) => {
     const a = e.target.closest('[data-ra]');

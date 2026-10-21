@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.0.7
+
+- **Search hover is instant.** The highlight now follows the pointer immediately instead of waiting for it to pause; only the action pane on the right waits a beat, and moving into the pane returns the selection to the result whose actions you are aiming at.
+- **Lighter on the machine.** Icons that fail to load are no longer re-requested from the helper on every hover, and wispy checks the cursor 40 times a second (instead of 100) while it is far from the bar, with no change to how quickly it reacts as you approach.
+- **Repo.** `scripts/test/perf.mjs` measures frame times while sweeping the dock and the search results; `npm run test:ui` now has 107 checks.
+
 ## v1.0.6
 
 - **Search is steady and clickable.** The search panel used to change height as you hovered different results and its buttons slid in on every selection, so the targets moved while you aimed. The panel now keeps one size for the whole set of results, buttons only fade, a result is selected when the pointer pauses on it (not while it passes over), and your keyboard selection is never undone by a resting mouse.
