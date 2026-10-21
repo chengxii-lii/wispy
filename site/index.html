@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
-<script>document.documentElement.classList.add('js')</script>
+<script>document.documentElement.classList.add('js'); setTimeout(function () { document.documentElement.classList.add('rv-fallback'); }, 2500);   /* if the reveal script never runs, show everything anyway */</script>
 <style>
 @font-face{font-family:"Endless";src:url(fonts/Endless-Regular.ttf) format("truetype");font-display:swap}
 :root{
@@ -50,7 +50,7 @@ img{display:block;max-width:100%}
 
 /* entrance: on only when JS runs */
 .js .rv{opacity:0;transform:translateY(28px);transition:opacity .9s var(--ease) var(--d,0s),transform .9s var(--ease) var(--d,0s)}
-.js .rv.in{opacity:1;transform:none}
+.js .rv.in,.rv-fallback .rv{opacity:1;transform:none}
 
 /* hero */
 .hero{min-height:100svh;display:flex;align-items:center;justify-content:center;text-align:center;padding:64px 24px}
@@ -362,6 +362,7 @@ void main(){
   /* ---------- reveal on scroll ---------- */
   const rio = new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting) { en.target.classList.add('in'); rio.unobserve(en.target); } }), { rootMargin: '0px 0px -8% 0px', threshold: .08 });
   $$('.rv').forEach(el => rio.observe(el));
+  requestAnimationFrame(() => $$('.hero .rv').forEach(el => el.classList.add('in')));   // the hero never waits for scrolling
 
   /* ---------- latest release: keep the download button honest ---------- */
   const dls = $$('[data-dl]'), metas = $$('[data-meta]');
