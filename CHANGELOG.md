@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.0.3
+
+- **Closed apps fade out instead of vanishing.** When you close an app, its icon stays in the dock for a moment, dimmed, so you can see it go.
+- **Always within reach.** After you open something from the dock, wispy used to stay shut until the cursor moved 100 pixels up. It now comes back as soon as you move, or after half a second. Maximised windows are no longer mistaken for fullscreen apps (which switched wispy off), and a window that only covers the screen for a moment while it opens is ignored.
+- **A steadier Windows key.** The key and mouse hooks now run on their own thread and refresh themselves, so a busy moment can no longer make the Windows Start menu open instead of wispy.
+
 ## v1.0.2
 
 - **No more frozen bar after a graphics crash.** If Windows resets the graphics driver, wispy now reloads its window instead of staying unclickable.
