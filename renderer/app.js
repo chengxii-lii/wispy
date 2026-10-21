@@ -18,7 +18,7 @@
   let Z2 = 12;          // distance from the screen's bottom edge: peek zone, open zone
   const ZX1 = 300, ZX2 = 210;        // how far from centre each zone reaches sideways
   let DWELL = 35;
-  const LEAVE = 260;
+  let LEAVE = 500;      // how long the cursor must stay away before the dock closes (the 'Close delay' setting)
 
   class Spring {
     constructor(x, freq, zeta) { this.x = x; this.v = 0; this.w = 2 * Math.PI * freq; this.z = zeta; }
@@ -76,6 +76,7 @@
     BASE = cfg.iconSize; DOCK_H = BASE + PAD * 2; MAXS = cfg.magnify;
     Z2 = { low: 6, med: 12, high: 24 }[cfg.edge] || 12;
     DWELL = cfg.delay;
+    LEAVE = typeof cfg.closeDelay === 'number' ? cfg.closeDelay : 500;
     const rc = row.classList;
     rc.toggle('no-tray', !cfg.showTray); rc.toggle('no-lang', !cfg.showLang); rc.toggle('no-pct', !cfg.showBattPct);
     rc.toggle('no-taskview', !cfg.showTaskView); rc.toggle('no-desk', !cfg.showDesktop); rc.toggle('no-date', cfg.dateFmt === 'off');
@@ -176,10 +177,13 @@
         el.addEventListener('click', (e) => {
           if (it.suppressClick) { it.suppressClick = false; return; }
           const cur = it.data || d;
+          pulse(it);
           if (cur.running > 1 && cur.wins && !e.shiftKey) { openPicker(it, cur); return; }
+          if (!(cur.running > 0)) markLaunching(it);
           tb.dockClick(d.id, e.shiftKey ? 'new' : ''); afterAction();
         });
-        el.addEventListener('pointerdown', (e) => beginDrag(it, e));
+        el.addEventListener('pointerdown', (e) => { el.classList.add('down'); beginDrag(it, e); });
+        for (const t of ['pointerup', 'pointercancel', 'pointerleave']) el.addEventListener(t, () => el.classList.remove('down'));
         el.addEventListener('auxclick', (e) => { if (e.button === 1) { tb.dockClick(d.id, 'new'); afterAction(); } });
         it = { id: d.id, el, scale: new Spring(1, 7, .82), intro: 0, icon: null, pinned: d.pinned, dx: 0 };
         it.tip = el.querySelector('.tip');
@@ -187,8 +191,9 @@
         itemsEl.appendChild(el);
       }
       if (it.ghost) { it.ghost = false; clearTimeout(it.ghostTimer); it.el.classList.remove('closing'); }   // it came back
+      const wasRunning = !!(it.data && it.data.running > 0);
       // a pinned app whose last window just closed dims for a moment too
-      if (it.data && it.data.running > 0 && !(d.running > 0) && d.pinned) {
+      if (wasRunning && !(d.running > 0) && d.pinned) {
         it.el.classList.add('closing'); clearTimeout(it.fadeTimer);
         it.fadeTimer = setTimeout(() => { if (!it.ghost) it.el.classList.remove('closing'); }, CLOSE_LINGER);
       }
@@ -196,6 +201,11 @@
       it.data = d;
       it.tip.textContent = d.name;
       it.el.setAttribute('aria-label', d.name);
+      // an app that has just started running: stop the launch hop, pop the icon and ring it
+      if (d.running > 0 && !wasRunning && (it.launching || (dockReady && !it.ghost))) {
+        stopLaunching(it); it.el.classList.remove('opened'); void it.el.offsetWidth; it.el.classList.add('opened');
+        clearTimeout(it.openT); it.openT = setTimeout(() => it.el.classList.remove('opened'), 800);
+      }
       it.el.classList.toggle('run', d.running > 0);
       it.el.classList.toggle('active', !!d.active);
       if (d.icon !== it.icon) {
@@ -220,8 +230,21 @@
     const firstExtra = order.findIndex((i) => !i.pinned);
     dividerAt = firstExtra > 0 ? firstExtra : -1;
     placeItems();
+    dockReady = true;
     wake();
   }
+
+  let dockReady = false;
+  // a quick press-and-release on whatever you click, and a hop while a launched app is still starting
+  function pulse(it) {
+    it.el.classList.remove('press'); void it.el.offsetWidth; it.el.classList.add('press');
+    clearTimeout(it.pressT); it.pressT = setTimeout(() => it.el.classList.remove('press'), 420);
+  }
+  function markLaunching(it) {
+    it.launching = true; it.el.classList.add('launching');
+    clearTimeout(it.launchT); it.launchT = setTimeout(() => stopLaunching(it), 8000);
+  }
+  function stopLaunching(it) { it.launching = false; clearTimeout(it.launchT); it.el.classList.remove('launching'); }
 
   const CLOSE_LINGER = 900;
   function dropGhost(it) {
@@ -996,6 +1019,7 @@
       { k: 'edgeOpen', label: 'Open when the cursor touches the edge', t: 'switch' },
       { k: 'edge', label: 'Edge sensitivity', t: 'seg', opts: [['low', 'Low'], ['med', 'Medium'], ['high', 'High']] },
       { k: 'delay', label: 'Open delay', t: 'range', min: 0, max: 400, step: 5, fmt: (v) => v + ' ms' },
+      { k: 'closeDelay', label: 'Close delay', t: 'range', min: 0, max: 2000, step: 50, fmt: (v) => (v === 0 ? 'Instant' : v + ' ms') },
       { k: 'keepOpen', label: 'Always show the dock', t: 'switch' },
       { k: 'winKey', label: 'Windows key', t: 'seg', opts: [['wispy', 'Open wispy'], ['start', 'Start menu']] },
       { k: 'monitor', label: 'Show on', t: 'monitor' },
@@ -1160,7 +1184,7 @@
 
   async function appMenu(id, x, y) {
     const m = await tb.appMenu(id);
-    const act = (a) => () => { tb.appAction(id, a); if (a !== 'pin' && a !== 'unpin') afterAction(); };
+    const act = (a) => () => { const li = items.get(id); if (li) { pulse(li); if (a === 'new' && !(li.data && li.data.running > 0)) markLaunching(li); } tb.appAction(id, a); if (a !== 'pin' && a !== 'unpin') afterAction(); };
     showMenu(x, y, [
       { label: m.running ? 'New window' : 'Open', icon: m.running ? 'i-plus' : 'i-open', fn: act('new') },
       m.canAdmin && { label: 'Run as administrator', icon: 'i-shield', fn: act('admin') },

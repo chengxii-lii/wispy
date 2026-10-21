@@ -86,7 +86,19 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: def
 .item .ph { border-radius: 22%; background: var(--raised-2); }
 .item img, .item .ph { transition: opacity .3s var(--ease), transform .35s var(--ease); transform-origin: 50% 100%; }
 .item.closing { pointer-events: none; }
-.item.closing img, .item.closing .ph { opacity: .35; transform: scale(.84); }
+.item.closing img, .item.closing .ph { opacity: .35; transform: scale(.84); animation: closeout .5s var(--ease); }
+/* feedback: press in, hop while an app starts, pop and ring when it is up, a little flourish when it goes */
+.item.down img, .item.down .ph { transform: scale(.88); transition-duration: .06s; }
+.item.launching img, .item.launching .ph { animation: hop .78s cubic-bezier(.3, .55, .35, 1) infinite; }
+.item.press img, .item.press .ph { animation: press .38s var(--ease); }
+.item.opened img, .item.opened .ph { animation: openpop .6s var(--ease); }
+.item.opened::after { content: ""; position: absolute; inset: -3px; border-radius: 26%; border: 2px solid var(--accent); pointer-events: none; animation: ring .7s var(--ease) forwards; }
+@keyframes press { 0% { transform: scale(.86); } 55% { transform: scale(1.07); } 100% { transform: scale(1); } }
+@keyframes hop { 0%, 100% { transform: translateY(0); } 38% { transform: translateY(-14px); } 62% { transform: translateY(0); } 80% { transform: translateY(-4px); } }
+@keyframes openpop { 0% { transform: scale(.9); } 45% { transform: scale(1.2); } 100% { transform: scale(1); } }
+@keyframes ring { 0% { opacity: .9; transform: scale(.92); } 100% { opacity: 0; transform: scale(1.5); } }
+@keyframes closeout { 0% { transform: scale(1); opacity: 1; } 35% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(.84); opacity: .35; } }
+@media (prefers-reduced-motion: reduce) { .item.launching img, .item.launching .ph { animation: none; } }
 .item .dot { position: absolute; left: 50%; bottom: -7px; width: 4px; height: 4px; margin-left: -2px; border-radius: 3px; background: var(--faint); opacity: 0; transition: opacity .2s, width .25s var(--ease), margin .25s var(--ease), background .2s; }
 .item.run .dot { opacity: 1; }
 .item.active .dot { width: 14px; margin-left: -7px; background: var(--accent); }
