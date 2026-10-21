@@ -485,24 +485,48 @@
     const cached = r.iconKey && iconMem.get(r.iconKey);
     return cached ? `<img src="${esc(cached)}" alt="">` : `<svg class="ic"><use href="#${ic}"/></svg>`;
   }
+  // The panel is built once and then patched in place. Rewriting its HTML on every hover or icon arrival used to
+  // replace the very button under your cursor between mouse-down and mouse-up, so clicks were lost and the pane flickered.
+  let sh = null, rowsKey = '', heroHtml = '', actsHtml = '';
+  function shell() {
+    if (sh && panels.search.contains(sh.list)) return sh;
+    panels.search.innerHTML = '<div class="sr"><div class="sr-list"></div><aside class="sr-pane"><div class="sp-hero"></div><div class="sp-acts"></div></aside></div>';
+    sh = { list: panels.search.querySelector('.sr-list'), hero: panels.search.querySelector('.sp-hero'), acts: panels.search.querySelector('.sp-acts') };
+    rowsKey = ''; heroHtml = ''; actsHtml = ''; paneKey = '';
+    return sh;
+  }
   function renderResults() {
     const list = compose();
     sel = clamp(sel, 0, list.length - 1);
-    const rows = list.map((r, i) => `<div class="res${i === sel ? ' sel' : ''}" data-i="${i}"><span class="rico">${resultIcon(r)}</span>` +
-      `<span class="rt"><b>${esc(r.title)}</b><i>${esc(r.sub)}</i></span></div>`).join('');
+    const { list: listEl, hero, acts } = shell();
+    const key = list.map((x) => x.kind + '|' + x.title + '|' + x.sub + '|' + (x.path || x.id || '')).join('\n');
+    if (key !== rowsKey) {
+      rowsKey = key;
+      listEl.innerHTML = list.map((x, i) => `<div class="res" data-i="${i}"><span class="rico"></span><span class="rt"><b>${esc(x.title)}</b><i>${esc(x.sub)}</i></span></div>`).join('');
+    }
+    list.forEach((x, i) => {
+      const el = listEl.children[i]; if (!el) return;
+      el.classList.toggle('sel', i === sel);
+      const ic = resultIcon(x), rico = el.firstElementChild;
+      if (rico._h !== ic) { rico.innerHTML = ic; rico._h = ic; }
+    });
     const r = list[sel];
-    const key = r.kind + ':' + r.title + ':' + (r.path || r.id || '');
-    const fresh = key !== paneKey;
-    paneKey = key;
+    const pk = r.kind + ':' + r.title + ':' + (r.path || r.id || '');
+    const fresh = pk !== paneKey;
+    paneKey = pk;
     const sub = r.kind === 'file' ? r.sub : KIND_LABEL[r.kind];
-    const pane = `<aside class="sr-pane"><div class="sp-hero${fresh ? ' anim' : ''}"><span class="sp-ic">${resultIcon(r)}</span><b>${esc(r.title)}</b><i>${esc(sub)}</i></div>` +
-      `<div class="sp-acts${fresh ? ' anim' : ''}">${actionsFor(r).map((a, i) => {
-        const done = paneDone && paneDone.key === key && paneDone.act === a;
-        return `<button class="${done ? 'done' : ''}" style="--i:${i}" data-ra="${a}">${done ? '<svg class="ic"><use href="#i-check"/></svg>' : `<svg class="ic"><use href="#${ACTIONS[a][1]}"/></svg>`}` +
-          `<span>${done ? esc(paneDone.text) : ACTIONS[a][0]}</span>${a === 'admin' ? '<kbd>Ctrl Shift Enter</kbd>' : a === 'open' ? '<kbd>Enter</kbd>' : ''}</button>`;
-      }).join('')}</div></aside>`;
-    panels.search.innerHTML = `<div class="sr"><div class="sr-list">${rows}</div>${pane}</div>`;
-    // fetch missing icons for apps and files, then refresh in place
+    const hh = `<span class="sp-ic">${resultIcon(r)}</span><b>${esc(r.title)}</b><i>${esc(sub)}</i>`;
+    if (hh !== heroHtml) { hero.innerHTML = hh; heroHtml = hh; }
+    const ah = actionsFor(r).map((a, i) => {
+      const done = paneDone && paneDone.key === pk && paneDone.act === a;
+      return `<button class="${done ? 'done' : ''}" style="--i:${i}" data-ra="${a}">${done ? '<svg class="ic"><use href="#i-check"/></svg>' : `<svg class="ic"><use href="#${ACTIONS[a][1]}"/></svg>`}` +
+        `<span>${done ? esc(paneDone.text) : ACTIONS[a][0]}</span>${a === 'admin' ? '<kbd>Ctrl Shift Enter</kbd>' : a === 'open' ? '<kbd>Enter</kbd>' : ''}</button>`;
+    }).join('');
+    if (ah !== actsHtml) { acts.innerHTML = ah; actsHtml = ah; }
+    if (fresh) {
+      for (const el of [hero, acts]) { el.classList.remove('anim'); void el.offsetWidth; el.classList.add('anim'); clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('anim'), 520); }
+    }
+    // fetch missing icons for apps and files; they are patched into place when they arrive
     list.forEach((x) => {
       if (!x.iconKey || iconMem.has(x.iconKey)) return;
       iconMem.set(x.iconKey, null);
@@ -551,10 +575,22 @@
   });
   async function focusSearch() { await tb.focusMe(); S.searching = true; S.wantFocus = true; q.focus(); wake(); }
 
+  // Hovering a result selects it, but only once the pointer rests on it for a moment and has really moved: the pointer
+  // crossing other rows on its way to an action button must not swap the pane, and a layout change under a resting
+  // pointer (which browsers report as a mouse move) must not undo a keyboard selection.
+  let hoverI = -1, hoverT = 0, lastMX = -1, lastMY = -1;
   panels.search.addEventListener('mousemove', (e) => {
-    const r = e.target.closest('.res'); if (!r) return;
-    const i = +r.dataset.i; if (i !== sel) { sel = i; renderResults(); }
+    if (e.clientX === lastMX && e.clientY === lastMY) return;
+    lastMX = e.clientX; lastMY = e.clientY;
+    const r = e.target.closest('.res');
+    const i = r ? +r.dataset.i : -1;
+    if (i === hoverI) return;
+    hoverI = i; clearTimeout(hoverT);
+    if (i < 0 || i === sel) return;
+    hoverT = setTimeout(() => { if (hoverI === i && S.mode === 'search') { sel = i; renderResults(); } }, 70);
   });
+  panels.search.addEventListener('mouseleave', () => { hoverI = -1; clearTimeout(hoverT); });
+  panels.search.addEventListener('mousedown', (e) => e.preventDefault());   // clicking an option keeps typing focus in the search box
   panels.search.addEventListener('click', (e) => {
     const a = e.target.closest('[data-ra]');
     if (a) { runAction(panels.search.currentList[sel], a.dataset.ra); return; }
