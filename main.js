@@ -60,7 +60,7 @@ let searchSeq = 0;
 // ---------------------------------------------------------------- settings
 const DEFAULTS = {
   theme: 'auto', accent: 'cloud', glass: 46, iconSize: 46, magnify: 1.62,
-  edgeOpen: true, edge: 'med', delay: 35, closeDelay: 500, keepOpen: false, winKey: 'wispy', monitor: 'primary',
+  edgeOpen: true, edge: 'med', delay: 35, closeDelay: 750, keepOpen: false, winKey: 'wispy', monitor: 'primary',
   clock24: false, seconds: false, dateFmt: 'short',
   showTray: true, showLang: true, showBattPct: true, showTaskView: true, showDesktop: false,
   dnd: false, searchEngine: 'google', v: 3,
@@ -517,7 +517,7 @@ function buildDock() {
     wins.forEach((w) => claimed.add(w.hwnd));
     return {
       id: p.id, name: p.name, pinned: true, icon: iconUrl(p.iconSrc),
-      running: wins.length, active: wins.some((w) => w.hwnd === fgHwnd), wins: winBrief(wins),
+      running: wins.length, active: wins.some((w) => w.hwnd === fgHwnd && !w.min), wins: winBrief(wins),
     };
   });
   const byExe = new Map();
@@ -532,7 +532,7 @@ function buildDock() {
     extra.push({
       id: 'run:' + b, name: (wins[0].name && !/^\w+\.\w+$/.test(wins[0].name) ? wins[0].name : '') || shortTitle(wins[0].title) || prettyExe(wins[0].exe), pinned: false,
       icon: iconUrl(wins[0].exe, null, wins[0].hwnd),
-      running: wins.length, active: wins.some((w) => w.hwnd === fgHwnd), wins: winBrief(wins),
+      running: wins.length, active: wins.some((w) => w.hwnd === fgHwnd && !w.min), wins: winBrief(wins),
     });
   }
   dockModel = items.concat(extra);
@@ -563,19 +563,24 @@ ipcMain.on('dock-click', (_e, id, mod) => {
   const p = pinned.find((x) => x.id === id);
   if (mod === 'new' && p) { launchPin(p); return; }
   if (wins.length) {
-    const activeIdx = wins.findIndex((w) => w.hwnd === fgHwnd);
+    // Windows keeps reporting a minimised window as the foreground one, so only a window that is not minimised is "active"
+    const activeIdx = wins.findIndex((w) => w.hwnd === fgHwnd && !w.min);
     if (activeIdx >= 0) {
-      if (wins.length > 1) send({ cmd: 'focus', hwnd: wins[(activeIdx + 1) % wins.length].hwnd });
-      else send({ cmd: 'minimize', hwnd: wins[0].hwnd });
+      if (wins.length > 1) focusWin(wins[(activeIdx + 1) % wins.length]);
+      else minimizeWin(wins[0]);
     } else {
-      send({ cmd: 'focus', hwnd: wins[0].hwnd });
+      focusWin(wins.find((w) => !w.min) || wins[0]);
     }
   } else if (p) {
     launchPin(p);
   }
 });
 
-ipcMain.on('window-focus', (_e, hwnd) => send({ cmd: 'focus', hwnd }));
+// do it, and update what we believe straight away: the helper's next report can be a few tens of ms away, and a second
+// click in that gap must see the new state, not the old one
+function focusWin(w) { send({ cmd: 'focus', hwnd: w.hwnd }); w.min = false; fgHwnd = w.hwnd; pushDock(); }
+function minimizeWin(w) { send({ cmd: 'minimize', hwnd: w.hwnd }); w.min = true; pushDock(); }
+ipcMain.on('window-focus', (_e, hwnd) => { const w = runWin.find((x) => x.hwnd === hwnd); if (w) focusWin(w); else send({ cmd: 'focus', hwnd }); });
 ipcMain.on('window-close', (_e, hwnd) => { const w = runWin.find((x) => x.hwnd === hwnd); if (w) closeWindows([w], w.name || prettyExe(w.exe), null); });
 ipcMain.on('dock-close', (_e, id) => { for (const w of winsFor(id)) send({ cmd: 'close', hwnd: w.hwnd }); });
 

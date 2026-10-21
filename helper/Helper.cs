@@ -42,6 +42,9 @@ static class Native
     [DllImport("user32.dll")] public static extern bool IsWindowVisible(IntPtr h);
     [DllImport("user32.dll")] public static extern bool IsIconic(IntPtr h);
     [DllImport("user32.dll")] public static extern bool EnumWindows(EnumProc cb, IntPtr l);
+    public delegate void WinEventProc(IntPtr hook, uint ev, IntPtr hwnd, int idObj, int idChild, uint thread, uint time);
+    [DllImport("user32.dll")] public static extern IntPtr SetWinEventHook(uint min, uint max, IntPtr mod, WinEventProc cb, uint pid, uint tid, uint flags);
+    [DllImport("user32.dll")] public static extern IntPtr GetParent(IntPtr h);
     [DllImport("user32.dll")] public static extern bool EnumChildWindows(IntPtr parent, EnumProc cb, IntPtr l);
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode)] public static extern int GetApplicationUserModelId(IntPtr process, ref uint len, StringBuilder id);
     [DllImport("user32.dll", CharSet = CharSet.Unicode)] public static extern int GetWindowText(IntPtr h, StringBuilder sb, int max);
@@ -198,6 +201,16 @@ static partial class Program
         winTimer.Tick += delegate { PollWindows(); };
         winTimer.Start();
 
+        // the poll above is only the safety net: windows opening, closing, minimising or taking the foreground
+        // ask for an immediate (throttled) poll, so the dock follows what you do within a frame or two
+        soonTimer = new System.Windows.Forms.Timer();
+        soonTimer.Interval = 80;
+        soonTimer.Tick += delegate { soonTimer.Stop(); PollWindows(); };
+        winEvProc = OnWinEvent;
+        Native.SetWinEventHook(0x0003, 0x0003, IntPtr.Zero, winEvProc, 0, 0, 0);   // foreground changed
+        Native.SetWinEventHook(0x0016, 0x0017, IntPtr.Zero, winEvProc, 0, 0, 0);   // minimise start / end
+        Native.SetWinEventHook(0x8001, 0x8003, IntPtr.Zero, winEvProc, 0, 0, 0);   // destroyed, shown, hidden
+
         System.Windows.Forms.Timer volTimer = new System.Windows.Forms.Timer();
         volTimer.Interval = 350;
         volTimer.Tick += delegate { PollVolume(); };
@@ -305,6 +318,30 @@ static partial class Program
             case "quit": ui.BeginInvoke(new Action(delegate { RestoreTaskbar(); Application.ExitThread(); })); break;
             default: HandleExtra(cmd, m); break;
         }
+    }
+
+    static System.Windows.Forms.Timer soonTimer;
+    static HashSet<long> knownWindows = new HashSet<long>();
+    static Native.WinEventProc winEvProc;
+    static void OnWinEvent(IntPtr hook, uint ev, IntPtr hwnd, int idObj, int idChild, uint thread, uint time)
+    {
+        if (ev >= 0x8000)
+        {
+            // created / destroyed / shown / hidden: only top-level windows the dock could care about, or the system is
+            // flooded with tooltips, menus and animation frames
+            if (idObj != 0 || idChild != 0 || hwnd == IntPtr.Zero || Native.GetParent(hwnd) != IntPtr.Zero) return;
+            long id = hwnd.ToInt64();
+            bool known = knownWindows.Contains(id);
+            if (ev == 0x8001 || ev == 0x8003) { if (!known) return; }        // destroy / hide: only windows we listed
+            else
+            {
+                if (known) return;                                           // show of one we already list changes nothing
+                if (Native.GetWindowTextLength(hwnd) == 0) return;
+                long ex = Native.GetWindowLongPtr(hwnd, -20).ToInt64();
+                if ((ex & 0x80) != 0 && (ex & 0x40000) == 0) return;         // tool windows
+            }
+        }
+        if (soonTimer != null && !soonTimer.Enabled) soonTimer.Start();
     }
 
     // ---------- hooks ----------
@@ -565,6 +602,9 @@ static partial class Program
             return true;
         }, IntPtr.Zero);
 
+        HashSet<long> seen = new HashSet<long>();
+        foreach (object o in list) seen.Add(Convert.ToInt64(((Dictionary<string, object>)o)["hwnd"]));
+        knownWindows = seen;
         IntPtr fg = Native.GetForegroundWindow();
         bool full = false;
         if (fg != IntPtr.Zero)
@@ -600,6 +640,10 @@ static partial class Program
     static void Focus(IntPtr h)
     {
         if (Native.IsIconic(h)) Native.ShowWindow(h, 9);
+        // Windows only lets the process that last received input take the foreground: a tap of an unassigned key,
+        // tagged so our own hook ignores it, counts as that input (this is what keeps "click to bring it up" reliable)
+        Native.keybd_event(0xE8, 0, 0, MaskTag);
+        Native.keybd_event(0xE8, 0, 2, MaskTag);
         IntPtr fg = Native.GetForegroundWindow();
         uint pid;
         uint fgThread = Native.GetWindowThreadProcessId(fg, out pid);

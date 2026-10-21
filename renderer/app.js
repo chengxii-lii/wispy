@@ -18,7 +18,7 @@
   let Z2 = 12;          // distance from the screen's bottom edge: peek zone, open zone
   const ZX1 = 300, ZX2 = 210;        // how far from centre each zone reaches sideways
   let DWELL = 35;
-  let LEAVE = 500;      // how long the cursor must stay away before the dock closes (the 'Close delay' setting)
+  let LEAVE = 750;      // how long the cursor must stay away before the dock closes (the 'Close delay' setting)
 
   class Spring {
     constructor(x, freq, zeta) { this.x = x; this.v = 0; this.w = 2 * Math.PI * freq; this.z = zeta; }
@@ -76,7 +76,7 @@
     BASE = cfg.iconSize; DOCK_H = BASE + PAD * 2; MAXS = cfg.magnify;
     Z2 = { low: 6, med: 12, high: 24 }[cfg.edge] || 12;
     DWELL = cfg.delay;
-    LEAVE = typeof cfg.closeDelay === 'number' ? cfg.closeDelay : 500;
+    LEAVE = typeof cfg.closeDelay === 'number' ? cfg.closeDelay : 750;
     const rc = row.classList;
     rc.toggle('no-tray', !cfg.showTray); rc.toggle('no-lang', !cfg.showLang); rc.toggle('no-pct', !cfg.showBattPct);
     rc.toggle('no-taskview', !cfg.showTaskView); rc.toggle('no-desk', !cfg.showDesktop); rc.toggle('no-date', cfg.dateFmt === 'off');
