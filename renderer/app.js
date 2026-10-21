@@ -95,10 +95,11 @@
     const d = S.inside ? H - S.cy : 1e4;
     const dx = S.inside ? Math.abs(S.cx - W / 2) : 1e4;
     S.d = d; S.dx = dx;
-    if (S.suppress && (d > 100 || !S.inside)) S.suppress = false;
-    const blocked = S.fullscreen || S.suppress;
-    const inZ1 = !blocked && d < Z1 && dx < ZX1;
-    const inZ2 = !blocked && cfg.edgeOpen && d <= Z2 && dx < Math.max(ZX2, barHalfWidth());
+    // after launching something the bar stays shut only while the cursor sits still on the spot you clicked
+    // (so it doesn't pop straight back over the new window); any real movement or a moment's wait brings it back
+    if (S.suppress && (!S.inside || now - S.supAt > 500 || Math.hypot(S.cx - S.supX, S.cy - S.supY) > 12)) S.suppress = false;
+    const inZ1 = !S.fullscreen && d < Z1 && dx < ZX1;
+    const inZ2 = !S.fullscreen && !S.suppress && cfg.edgeOpen && d <= Z2 && dx < Math.max(ZX2, barHalfWidth());
 
     // magnet strength: grows as the cursor nears the edge, fades sideways
     const s = smooth(Z1, Z2, d) * smooth(ZX1, 150, dx);
@@ -134,7 +135,7 @@
     if (!S.open && S.mode === 'dock') return;
     hideMenu();
     S.open = !!cfg.keepOpen && !S.fullscreen; S.pinned = false; S.dwellAt = 0;
-    if (launched) S.suppress = true;
+    if (launched) { S.suppress = true; S.supAt = performance.now(); S.supX = S.cx; S.supY = S.cy; }
     setMode('dock');
     q.value = ''; q.blur(); S.searching = false;
     results = []; fileResults = [];

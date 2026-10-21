@@ -128,6 +128,7 @@ static partial class Program
     static Native.HookProc kbProc = KbHook;
     static Native.HookProc msProc = MsHook;
     static IntPtr kbHook = IntPtr.Zero, msHook = IntPtr.Zero;
+    static int fullPolls = 0;
     static bool winDown, otherPressed, acceptInjected;
     static readonly UIntPtr MaskTag = new UIntPtr(0x7B1B);
 
@@ -174,9 +175,12 @@ static partial class Program
         ui = new Control();
         IntPtr unused = ui.Handle; // force handle creation on this (UI) thread
 
-        IntPtr mod = Native.GetModuleHandle(null);
-        kbHook = Native.SetWindowsHookEx(13, kbProc, mod, 0);
-        msHook = Native.SetWindowsHookEx(14, msProc, mod, 0);
+        // the hooks live on their own thread: if the UI thread is busy (window polling, icons), Windows must never
+        // have to wait on them, or it skips the key (the Start menu opens) or drops the hook for good
+        Thread hooker = new Thread(HookLoop);
+        hooker.SetApartmentState(ApartmentState.STA);
+        hooker.IsBackground = true;
+        hooker.Start();
 
         Thread worker = new Thread(IconWorker);
         worker.SetApartmentState(ApartmentState.STA);
@@ -302,6 +306,26 @@ static partial class Program
     }
 
     // ---------- hooks ----------
+    static void InstallHooks()
+    {
+        IntPtr mod = Native.GetModuleHandle(null);
+        if (kbHook != IntPtr.Zero) Native.UnhookWindowsHookEx(kbHook);
+        if (msHook != IntPtr.Zero) Native.UnhookWindowsHookEx(msHook);
+        kbHook = Native.SetWindowsHookEx(13, kbProc, mod, 0);
+        msHook = Native.SetWindowsHookEx(14, msProc, mod, 0);
+    }
+
+    static void HookLoop()
+    {
+        InstallHooks();
+        // Windows silently removes a low-level hook that ever answers too slowly; putting it back is cheap
+        System.Windows.Forms.Timer refresh = new System.Windows.Forms.Timer();
+        refresh.Interval = 30000;
+        refresh.Tick += delegate { InstallHooks(); };
+        refresh.Start();
+        Application.Run();
+    }
+
     static IntPtr KbHook(int code, IntPtr wParam, IntPtr lParam)
     {
         if (code >= 0)
@@ -509,13 +533,17 @@ static partial class Program
                 Native.GetClassName(fg, cls, 128);
                 string c = cls.ToString();
                 long style = Native.GetWindowLongPtr(fg, -16).ToInt64();
-                if (Native.GetMonitorInfo(mon, ref mi) && (style & 0xC00000) != 0xC00000 &&
+                // a maximised window also fills the screen now that the taskbar is hidden: not fullscreen
+                if (Native.GetMonitorInfo(mon, ref mi) && (style & 0xC00000) != 0xC00000 && (style & 0x01000000) == 0 &&
                     c != "Progman" && c != "WorkerW" && c != "Shell_TrayWnd" &&
                     r.left <= mi.rcMonitor.left && r.top <= mi.rcMonitor.top &&
                     r.right >= mi.rcMonitor.right && r.bottom >= mi.rcMonitor.bottom) full = true;
             }
             catch { }
         }
+        // a window opening can cover the screen for a moment: only call it fullscreen once it has stayed that way
+        fullPolls = full ? fullPolls + 1 : 0;
+        full = fullPolls >= 2;
         Dictionary<string, object> d = new Dictionary<string, object>();
         try { PollExtras(fg); } catch { }
         d["list"] = list; d["fg"] = fg.ToInt64(); d["full"] = full;
