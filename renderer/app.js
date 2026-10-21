@@ -130,6 +130,16 @@
     wake();
   }
 
+  // after you open, close or switch an app from the dock: a dock you opened with the mouse stays put (so you can
+  // see what happened and keep going); one opened with the Windows key closes as before
+  function afterAction() {
+    if (S.pinned) { closeBar({ launched: true }); return; }
+    hideMenu();
+    if (S.mode !== 'dock') setMode('dock');
+    S.leaveAt = 0;
+    wake();
+  }
+
   function closeBar(opts) {
     const launched = opts && opts.launched;
     if (!S.open && S.mode === 'dock') return;
@@ -167,10 +177,10 @@
           if (it.suppressClick) { it.suppressClick = false; return; }
           const cur = it.data || d;
           if (cur.running > 1 && cur.wins && !e.shiftKey) { openPicker(it, cur); return; }
-          tb.dockClick(d.id, e.shiftKey ? 'new' : ''); closeBar({ launched: true });
+          tb.dockClick(d.id, e.shiftKey ? 'new' : ''); afterAction();
         });
         el.addEventListener('pointerdown', (e) => beginDrag(it, e));
-        el.addEventListener('auxclick', (e) => { if (e.button === 1) { tb.dockClick(d.id, 'new'); closeBar({ launched: true }); } });
+        el.addEventListener('auxclick', (e) => { if (e.button === 1) { tb.dockClick(d.id, 'new'); afterAction(); } });
         it = { id: d.id, el, scale: new Spring(1, 7, .82), intro: 0, icon: null, pinned: d.pinned, dx: 0 };
         it.tip = el.querySelector('.tip');
         items.set(d.id, it);
@@ -1140,17 +1150,17 @@
     const r = it.el.getBoundingClientRect();
     const rows = cur.wins.map((w) => ({
       label: w.title || '(untitled window)', icon: 'i-app',
-      fn: () => { tb.windowFocus(w.hwnd); closeBar({ launched: true }); },
+      fn: () => { tb.windowFocus(w.hwnd); afterAction(); },
       close: () => tb.windowClose(w.hwnd),
     }));
     showMenu(r.x + r.width / 2, bar.getBoundingClientRect().top - 4,
-      rows.concat([{ sep: true }, { label: 'New window', icon: 'i-plus', fn: () => { tb.dockClick(cur.id, 'new'); closeBar({ launched: true }); } }]),
+      rows.concat([{ sep: true }, { label: 'New window', icon: 'i-plus', fn: () => { tb.dockClick(cur.id, 'new'); afterAction(); } }]),
       { title: cur.name, icon: cur.icon });
   }
 
   async function appMenu(id, x, y) {
     const m = await tb.appMenu(id);
-    const act = (a) => () => { tb.appAction(id, a); if (a !== 'pin' && a !== 'unpin') closeBar({ launched: true }); };
+    const act = (a) => () => { tb.appAction(id, a); if (a !== 'pin' && a !== 'unpin') afterAction(); };
     showMenu(x, y, [
       { label: m.running ? 'New window' : 'Open', icon: m.running ? 'i-plus' : 'i-open', fn: act('new') },
       m.canAdmin && { label: 'Run as administrator', icon: 'i-shield', fn: act('admin') },
