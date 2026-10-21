@@ -14,7 +14,7 @@
     { id: 'run:code', name: 'Code', pinned: false, icon: icon('#0a84d6', 'V'), running: 1, active: false },
   ];
   let radios = [{ kind: 'WiFi', state: 'On' }, { kind: 'Bluetooth', state: 'On' }];
-  let cfgStore = { theme: 'auto', accent: 'cloud', glass: 46, iconSize: 46, magnify: 1.62, edgeOpen: true, edge: 'med', delay: 35, closeDelay: 35, keepOpen: false, winKey: 'wispy', monitor: 'primary', clock24: false, seconds: false, dateFmt: 'short', showTray: true, showLang: true, showBattPct: true, showTaskView: true, showDesktop: false, dnd: false, searchEngine: 'google' };
+  let cfgStore = { theme: 'auto', accent: 'cloud', glass: 46, iconSize: 46, magnify: 1.62, edgeOpen: true, edge: 'med', delay: 35, closeDelay: 35, closeAppDelay: 500, keepOpen: false, winKey: 'wispy', monitor: 'primary', clock24: false, seconds: false, dateFmt: 'short', showTray: true, showLang: true, showBattPct: true, showTaskView: true, showDesktop: false, dnd: false, searchEngine: 'google' };
   const DEFAULT_CFG = { ...cfgStore };
   window.tb = {
     config: async () => cfgStore,

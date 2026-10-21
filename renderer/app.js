@@ -18,6 +18,7 @@
   let Z2 = 12;          // distance from the screen's bottom edge: peek zone, open zone
   const ZX1 = 300, ZX2 = 210;        // how far from centre each zone reaches sideways
   let DWELL = 35;
+  let CLOSE_ANIM = 500; // after an app closes the dock stays up this long, so the icon's close animation plays out (the 'after an app closes' setting)
   let LEAVE = 35;      // how long the cursor must stay away before the dock closes (the 'Close delay' setting)
 
   class Spring {
@@ -77,6 +78,7 @@
     Z2 = { low: 6, med: 12, high: 24 }[cfg.edge] || 12;
     DWELL = cfg.delay;
     LEAVE = typeof cfg.closeDelay === 'number' ? cfg.closeDelay : 35;
+    CLOSE_ANIM = typeof cfg.closeAppDelay === 'number' ? cfg.closeAppDelay : 500;
     const rc = row.classList;
     rc.toggle('no-tray', !cfg.showTray); rc.toggle('no-lang', !cfg.showLang); rc.toggle('no-pct', !cfg.showBattPct);
     rc.toggle('no-taskview', !cfg.showTaskView); rc.toggle('no-desk', !cfg.showDesktop); rc.toggle('no-date', cfg.dateFmt === 'off');
@@ -92,6 +94,7 @@
   function barHalfWidth() { return Math.max(layoutDockW(false), row.offsetWidth) / 2; }
 
   function zones(now) {
+    if (S.holdReq) { S.holdUntil = now + S.holdReq; S.holdReq = 0; }   // 'stay up while the closed app's icon animates', on this clock
     const W = innerWidth, H = innerHeight;
     const d = S.inside ? H - S.cy : 1e4;
     const dx = S.inside ? Math.abs(S.cx - W / 2) : 1e4;
@@ -139,6 +142,7 @@
     hideMenu();
     if (S.mode !== 'dock') setMode('dock');
     S.leaveAt = 0;
+    S.holdReq = Math.max(CLOSE_ANIM, 900);   // the pointer is usually up where the menu was, away from the dock: give it a moment to come back
     wake();
   }
 
@@ -164,7 +168,7 @@
     for (const [id, it] of items) {
       if (ids.has(id)) continue;
       if (!it.ghost) {
-        it.ghost = true; S.holdUntil = performance.now() + CLOSE_ANIM; it.el.classList.add('closing'); it.el.classList.remove('run', 'active');
+        it.ghost = true; S.holdReq = CLOSE_ANIM; it.el.classList.add('closing'); it.el.classList.remove('run', 'active');
         it.ghostTimer = setTimeout(() => dropGhost(it), CLOSE_LINGER);
       }
     }
@@ -192,10 +196,12 @@
         itemsEl.appendChild(el);
       }
       if (it.ghost) { it.ghost = false; clearTimeout(it.ghostTimer); it.el.classList.remove('closing'); }   // it came back
-      const wasRunning = !!(it.data && it.data.running > 0);
+      const prevRunning = it.data ? it.data.running : 0;
+      const wasRunning = prevRunning > 0;
+      if (d.running < prevRunning) S.holdReq = CLOSE_ANIM;   // a window of this app just closed
       // a pinned app whose last window just closed dims for a moment too
       if (wasRunning && !(d.running > 0) && d.pinned) {
-        it.el.classList.add('closing'); S.holdUntil = performance.now() + CLOSE_ANIM; clearTimeout(it.fadeTimer);
+        it.el.classList.add('closing'); S.holdReq = CLOSE_ANIM; clearTimeout(it.fadeTimer);
         it.fadeTimer = setTimeout(() => { if (!it.ghost) it.el.classList.remove('closing'); }, CLOSE_LINGER);
       }
       it.pinned = d.pinned;
@@ -248,7 +254,6 @@
   function stopLaunching(it) { it.launching = false; clearTimeout(it.launchT); it.el.classList.remove('launching'); }
 
   const CLOSE_LINGER = 900;   // how long a closed app's slot stays, dimmed
-  const CLOSE_ANIM = 500;     // the icon's close animation (style.css, closeout): the dock stays up at least this long
   function dropGhost(it) {
     if (items.get(it.id) !== it || !it.ghost) return;
     it.el.remove(); items.delete(it.id);
@@ -493,14 +498,15 @@
   function shell() {
     if (sh && panels.search.contains(sh.list)) return sh;
     panels.search.innerHTML = '<div class="sr"><div class="sr-list"></div><aside class="sr-pane"><div class="sp-hero"></div><div class="sp-acts"></div></aside></div>';
-    sh = { list: panels.search.querySelector('.sr-list'), hero: panels.search.querySelector('.sp-hero'), acts: panels.search.querySelector('.sp-acts') };
+    sh = { root: panels.search.querySelector('.sr'), list: panels.search.querySelector('.sr-list'), hero: panels.search.querySelector('.sp-hero'), acts: panels.search.querySelector('.sp-acts') };
     rowsKey = ''; heroHtml = ''; actsHtml = ''; paneKey = '';
     return sh;
   }
   function renderResults() {
     const list = compose();
     sel = clamp(sel, 0, list.length - 1);
-    const { list: listEl, hero, acts } = shell();
+    const { root, list: listEl, hero, acts } = shell();
+    root.style.setProperty('--acts', Math.max(...list.map((x) => actionsFor(x).length)));
     const key = list.map((x) => x.kind + '|' + x.title + '|' + x.sub + '|' + (x.path || x.id || '')).join('\n');
     if (key !== rowsKey) {
       rowsKey = key;
@@ -586,10 +592,9 @@
     lastMX = e.clientX; lastMY = e.clientY;
     const r = e.target.closest('.res');
     const i = r ? +r.dataset.i : -1;
-    if (i === hoverI) return;
-    hoverI = i; clearTimeout(hoverT);
+    hoverI = i; clearTimeout(hoverT);      // every movement restarts the wait: only a pointer that pauses on a row selects it
     if (i < 0 || i === sel) return;
-    hoverT = setTimeout(() => { if (hoverI === i && S.mode === 'search') { sel = i; renderResults(); } }, 70);
+    hoverT = setTimeout(() => { if (hoverI === i && S.mode === 'search') { sel = i; renderResults(); } }, 90);
   });
   panels.search.addEventListener('mouseleave', () => { hoverI = -1; clearTimeout(hoverT); });
   panels.search.addEventListener('mousedown', (e) => e.preventDefault());   // clicking an option keeps typing focus in the search box
@@ -1058,6 +1063,7 @@
       { k: 'edge', label: 'Edge sensitivity', t: 'seg', opts: [['low', 'Low'], ['med', 'Medium'], ['high', 'High']] },
       { k: 'delay', label: 'Open delay', t: 'range', min: 0, max: 400, step: 5, fmt: (v) => v + ' ms' },
       { k: 'closeDelay', label: 'Close delay', t: 'range', min: 0, max: 1500, step: 5, fmt: (v) => (v === 0 ? 'Instant' : v + ' ms') },
+      { k: 'closeAppDelay', label: 'Close delay after closing an app', t: 'range', min: 0, max: 3000, step: 50, fmt: (v) => (v === 0 ? 'Instant' : v + ' ms') },
       { k: 'keepOpen', label: 'Always show the dock', t: 'switch' },
       { k: 'winKey', label: 'Windows key', t: 'seg', opts: [['wispy', 'Open wispy'], ['start', 'Start menu']] },
       { k: 'monitor', label: 'Show on', t: 'monitor' },

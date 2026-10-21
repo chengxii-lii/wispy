@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.6
+
+- **Search is steady and clickable.** The search panel used to change height as you hovered different results and its buttons slid in on every selection, so the targets moved while you aimed. The panel now keeps one size for the whole set of results, buttons only fade, a result is selected when the pointer pauses on it (not while it passes over), and your keyboard selection is never undone by a resting mouse.
+- **Dock stays up after a menu action.** Choosing Open, New window or Close from an app's right-click menu no longer closes the dock the moment the menu goes away.
+- **A second close delay.** Settings has "Close delay" (default 35 ms) for when the cursor leaves and "Close delay after closing an app" (default 500 ms, up to 3 s) for how long the dock stays up while a closed app's icon fades out. It also applies when one of an app's windows closes.
+- **Smaller download.** The installer no longer carries the website's files.
+- **Repo.** `npm run test:ui` drives the real UI in headless Chrome with real mouse and keyboard input (103 checks: dock, clicking apps, search, every panel, every setting).
+
 ## v1.0.5
 
 - **Clicking in search works.** Clicking a result or one of its options (Open, Run as administrator, Open file location, Pin) with the mouse could fail or make the panel jump around, because the panel was rebuilt under your cursor. It is now updated in place, hovering selects a result only once the pointer rests on it, and the search box keeps focus while you click.

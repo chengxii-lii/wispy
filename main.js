@@ -60,7 +60,7 @@ let searchSeq = 0;
 // ---------------------------------------------------------------- settings
 const DEFAULTS = {
   theme: 'auto', accent: 'cloud', glass: 46, iconSize: 46, magnify: 1.62,
-  edgeOpen: true, edge: 'med', delay: 35, closeDelay: 35, keepOpen: false, winKey: 'wispy', monitor: 'primary',
+  edgeOpen: true, edge: 'med', delay: 35, closeDelay: 35, closeAppDelay: 500, keepOpen: false, winKey: 'wispy', monitor: 'primary',
   clock24: false, seconds: false, dateFmt: 'short',
   showTray: true, showLang: true, showBattPct: true, showTaskView: true, showDesktop: false,
   dnd: false, searchEngine: 'google', v: 3,

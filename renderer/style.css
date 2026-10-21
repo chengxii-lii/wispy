@@ -435,11 +435,11 @@ button[disabled], .pill-btn[disabled], .qs.busy button { cursor: default; }
 
 /* search: results on the left, what you can do with the selected one on the right */
 #p-search { padding: 0; min-width: 600px; }
-.sr { display: flex; align-items: stretch; }
+.sr { display: flex; align-items: stretch; min-height: calc(var(--acts, 3) * 35px + 190px); }   /* sized for the longest action list in the results, so hovering never changes the panel's height */
 .sr-list { flex: 1; min-width: 0; padding: 8px; }
 .sr-pane { width: 230px; flex: none; display: flex; flex-direction: column; padding: 14px 10px 10px; border-left: 1px solid var(--line); background: rgba(127, 127, 127, .04); }
-.sp-hero { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 4px; padding: 6px 6px 14px; border-bottom: 1px solid var(--line); margin-bottom: 8px; }
-.sp-hero.anim { animation: rin .26s var(--ease) both; }
+.sp-hero { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 4px; height: 150px; flex: none; box-sizing: border-box; overflow: hidden; padding: 6px 6px 14px; border-bottom: 1px solid var(--line); margin-bottom: 8px; }
+.sp-hero.anim { animation: sfade .14s ease both; }
 .sp-ic { width: 52px; height: 52px; display: grid; place-items: center; margin-bottom: 6px; color: var(--muted); }
 .sp-ic img { width: 48px; height: 48px; object-fit: contain; filter: drop-shadow(0 3px 8px rgba(0, 0, 0, .3)); }
 .sp-ic .ic { width: 34px; height: 34px; stroke-width: 1.4; }
@@ -447,7 +447,8 @@ button[disabled], .pill-btn[disabled], .qs.busy button { cursor: default; }
 .sp-hero i { font-style: normal; font-size: 11.5px; color: var(--muted); max-width: 100%; word-break: break-all; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .sp-acts { display: flex; flex-direction: column; gap: 1px; }
 .sp-acts button { display: flex; align-items: center; gap: 10px; height: 34px; padding: 0 10px; border-radius: 10px; text-align: left; font-size: 12.5px; transition: background .12s, color .2s; }
-.sp-acts.anim button { animation: rin .3s var(--ease) both; animation-delay: calc(var(--i) * 30ms + 40ms); }
+.sp-acts.anim button { animation: sfade .14s ease both; }   /* fade only: sliding buttons made the targets move while you aimed at them */
+@keyframes sfade { from { opacity: 0; } to { opacity: 1; } }
 .sp-acts button:hover { background: var(--raised-2); }
 .sp-acts button .ic { width: 16px; height: 16px; color: var(--muted); }
 .sp-acts button span { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

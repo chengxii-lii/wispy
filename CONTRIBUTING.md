@@ -18,6 +18,7 @@ npm run helper     # builds helper/wispy-helper.exe
 npm start          # runs the app; it hides your taskbar, so know how to restore it:
                    #   powershell -File scripts/restore-taskbar.ps1
 npm test           # fast checks, no Windows APIs needed
+npm run test:ui    # the real UI in headless Chrome, driven with real mouse and keyboard (needs Chrome, Edge or Helium)
 ```
 
 **UI work needs no Windows features at all.** Serve the `renderer/` folder (`python -m http.server`) and open it in a browser: `renderer/mock.js` stands in for the Electron side, and `window.__wispy.advance(ms)` steps the animation without waiting.
