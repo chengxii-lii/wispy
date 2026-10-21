@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.0.5
+
+- **Clicking in search works.** Clicking a result or one of its options (Open, Run as administrator, Open file location, Pin) with the mouse could fail or make the panel jump around, because the panel was rebuilt under your cursor. It is now updated in place, hovering selects a result only once the pointer rests on it, and the search box keeps focus while you click.
+- **Close delay.** The dock closes 35 ms after the cursor leaves (adjustable in Settings, Behaviour), but when an app closes it stays up for the length of the icon's close animation so you can see it go.
+
 ## v1.0.4
 
 - **Click again to bring it back.** Minimising an app from the dock and clicking it again now restores it every time. Windows kept reporting a minimised window as the active one, so wispy minimised it a second time.

@@ -1,7 +1,7 @@
 {
   "name": "wispy",
   "productName": "wispy",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "private": true,
   "description": "A phone-style home bar that replaces the Windows taskbar: it rises to meet your cursor, opens into a dock, and holds search, quick settings and notifications.",
   "keywords": [
