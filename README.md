@@ -4,7 +4,7 @@
 
 <br>
 
-[![Version](https://img.shields.io/badge/version-1.0.3-8fa3ba?style=flat-square)](https://github.com/chengxii-lii/wispy/releases)
+[![Version](https://img.shields.io/badge/version-1.0.4-8fa3ba?style=flat-square)](https://github.com/chengxii-lii/wispy/releases)
 [![Website](https://img.shields.io/badge/website-chengxii--lii.github.io%2Fwispy-8fa3ba?style=flat-square)](https://chengxii-lii.github.io/wispy/)
 [![Windows 11](https://img.shields.io/badge/Windows-11-8fa3ba?style=flat-square)](#install)
 [![License: MIT](https://img.shields.io/badge/license-MIT-8fa3ba?style=flat-square)](LICENSE)

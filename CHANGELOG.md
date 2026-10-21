@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.0.4
+
+- **Click again to bring it back.** Minimising an app from the dock and clicking it again now restores it every time. Windows kept reporting a minimised window as the active one, so wispy minimised it a second time.
+- **The dock keeps up.** It follows windows opening, closing, minimising and switching within about a tenth of a second (it used to take up to 0.6 s), and bringing a window to the front works more reliably.
+- **The dock stays open while you work in it.** Opening, closing or switching an app from the dock, or from its right-click menu, no longer closes it. New **Close delay** setting (default 750 ms) sets how long it waits after the cursor leaves.
+- **Clear feedback.** Icons squash when pressed, hop while an app is starting, pop with a ring when it is up, and fade out when it closes.
+- **Settings and other Windows apps show their running dot** (apps hosted in Windows' app frame were invisible before).
+- **Always within reach.** wispy no longer stays shut after you open something, and maximised windows are not mistaken for fullscreen apps. The Windows key hook runs on its own thread and refreshes itself, and a crashed graphics process now reloads the window instead of leaving it frozen.
+
 ## v1.0.3
 
 - **Closed apps fade out instead of vanishing.** When you close an app, its icon stays in the dock for a moment, dimmed, so you can see it go.
