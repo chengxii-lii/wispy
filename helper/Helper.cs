@@ -42,6 +42,8 @@ static class Native
     [DllImport("user32.dll")] public static extern bool IsWindowVisible(IntPtr h);
     [DllImport("user32.dll")] public static extern bool IsIconic(IntPtr h);
     [DllImport("user32.dll")] public static extern bool EnumWindows(EnumProc cb, IntPtr l);
+    [DllImport("user32.dll")] public static extern bool EnumChildWindows(IntPtr parent, EnumProc cb, IntPtr l);
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode)] public static extern int GetApplicationUserModelId(IntPtr process, ref uint len, StringBuilder id);
     [DllImport("user32.dll", CharSet = CharSet.Unicode)] public static extern int GetWindowText(IntPtr h, StringBuilder sb, int max);
     [DllImport("user32.dll", CharSet = CharSet.Unicode)] public static extern int GetWindowTextLength(IntPtr h);
     [DllImport("user32.dll", CharSet = CharSet.Unicode)] public static extern int GetClassName(IntPtr h, StringBuilder sb, int max);
@@ -465,6 +467,24 @@ static partial class Program
         return s;
     }
 
+    static string AumidOf(uint pid)
+    {
+        string s = "";
+        IntPtr h = Native.OpenProcess(0x1000, false, pid);
+        if (h != IntPtr.Zero)
+        {
+            try
+            {
+                uint len = 256;
+                StringBuilder sb = new StringBuilder(256);
+                if (Native.GetApplicationUserModelId(h, ref len, sb) == 0) s = sb.ToString().ToLowerInvariant();
+            }
+            catch { }
+            Native.CloseHandle(h);
+        }
+        return s;
+    }
+
     static string NameOf(string exe, string title)
     {
         string n;
@@ -503,8 +523,33 @@ static partial class Program
             string exe = ExeOf(pid);
             if (exe.Length == 0) return true;
             string low = exe.ToLowerInvariant();
-            if (low == selfExe) return true;
             string file = Path.GetFileName(low);
+            string aumid = "";
+            if (file == "applicationframehost.exe")
+            {
+                // Settings, Calculator and other UWP apps live inside Windows' app frame: the real app is the process
+                // that owns the CoreWindow inside it
+                uint appPid = 0;
+                uint framePid = pid;
+                Native.EnumChildWindows(h, delegate(IntPtr ch, IntPtr lp)
+                {
+                    StringBuilder cc = new StringBuilder(64);
+                    Native.GetClassName(ch, cc, 64);
+                    if (cc.ToString() != "Windows.UI.Core.CoreWindow") return true;
+                    uint p2; Native.GetWindowThreadProcessId(ch, out p2);
+                    if (p2 == framePid) return true;
+                    appPid = p2;
+                    return false;
+                }, IntPtr.Zero);
+                if (appPid == 0) return true;
+                exe = ExeOf(appPid);
+                if (exe.Length == 0) return true;
+                pid = appPid;
+                low = exe.ToLowerInvariant();
+                file = Path.GetFileName(low);
+                aumid = AumidOf(appPid);
+            }
+            if (low == selfExe) return true;
             for (int i = 0; i < SkipExes.Length; i++) if (file == SkipExes[i]) return true;
             StringBuilder t = new StringBuilder(len + 2);
             Native.GetWindowText(h, t, len + 2);
@@ -514,6 +559,7 @@ static partial class Program
             w["title"] = t.ToString();
             w["name"] = NameOf(exe, t.ToString());
             w["pid"] = (long)pid;
+            if (aumid.Length > 0) w["aumid"] = aumid;
             w["min"] = Native.IsIconic(h);
             list.Add(w);
             return true;

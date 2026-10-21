@@ -507,7 +507,8 @@ function shortTitle(t) { const s = String(t || '').split(/ [-–—|] /).pop().t
 
 let dockModel = [];
 const winBrief = (wins) => (wins.length > 1 ? wins.map((w) => ({ hwnd: w.hwnd, title: w.title, min: !!w.min })) : undefined);
-function pinWins(p) { return runWin.filter((w) => pinMatches(p, w.exe)); }
+// a window belongs to a pin by exe, by package, or (UWP apps inside Windows' app frame, like Settings) by AUMID
+function pinWins(p) { return runWin.filter((w) => (w.aumid && p.aumid && w.aumid === p.aumid.toLowerCase()) || pinMatches(p, w.exe)); }
 
 function buildDock() {
   const claimed = new Set();
