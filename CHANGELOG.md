@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.8
+
+- **Search finds the Recycle Bin, and more.** System folders (Recycle Bin, This PC, Desktop, Documents, Downloads, Pictures, Music, Videos, Screenshots, Network, Control Panel, the Startup and Fonts folders) and Windows' built-in tools (Task Manager, Device Manager, Disk Management, Services, Event Viewer, Registry Editor, Command Prompt, PowerShell, System Information and a few more) now show up as results, with the same keyboard and mouse actions as apps (tools can run as administrator). Searching "trash", "bin" or "empty" finds the Recycle Bin too.
+
 ## v1.0.7
 
 - **Search hover is instant.** The highlight now follows the pointer immediately instead of waiting for it to pause; only the action pane on the right waits a beat, and moving into the pane returns the selection to the result whose actions you are aiming at.

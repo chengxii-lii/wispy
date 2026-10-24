@@ -8,6 +8,7 @@ const crypto = require('crypto');
 const os = require('os');
 const { DatabaseSync } = require('node:sqlite');
 const SETTINGS = require('./settings-list');
+const PLACES = require('./places-list');
 
 // wispy was called tinybar, neon, then wisp before its public release: carry the old settings over, once
 (() => {
@@ -728,6 +729,16 @@ ipcMain.handle('search', async (_e, rawQ, seq) => {
   const sets = SETTINGS.map(([title, uri, kw]) => ({ s: Math.max(score(q, title), score(q, kw || '') * 0.8), title, uri }))
     .filter((x) => x.s > 0).sort((x, y) => y.s - x.s).slice(0, 3)
     .map(({ s, title, uri }) => ({ kind: 'setting', title, sub: 'Settings', uri, s }));
+  // system folders (Recycle Bin, This PC, Downloads...) and built-in tools (Task Manager, Device Manager...)
+  const have = new Set(apps.map((a) => a.title.toLowerCase()));
+  const sys32 = path.join(process.env.SystemRoot || 'C:\\Windows', 'System32');
+  const extra = [
+    ...PLACES.places.map(([title, target, kw]) => ({ s: Math.max(score(q, title), score(q, kw || '') * 0.8), title, kind: 'place', target })),
+    ...PLACES.tools.map(([title, exe, kw]) => ({ s: Math.max(score(q, title), score(q, kw || '') * 0.8), title, kind: 'tool', exe })),
+  ].filter((x) => x.s > 0 && !have.has(x.title.toLowerCase())).sort((x, y) => y.s - x.s).slice(0, 3)
+    .map((x) => x.kind === 'place'
+      ? { kind: 'place', title: x.title, sub: 'Folder', target: x.target, s: x.s }
+      : { kind: 'tool', title: x.title, sub: 'Windows tool', exe: x.exe, path: x.exe, s: x.s, canAdmin: true, iconSrc: path.join(sys32, /\.msc$/i.test(x.exe) ? 'mmc.exe' : x.exe), iconKey: 'tool:' + x.exe });
   // ask the Windows index for files in parallel; results come back as an event
   if (q.length >= 2) {
     request({ cmd: 'search', q }).then((r) => {
@@ -747,7 +758,7 @@ ipcMain.handle('search', async (_e, rawQ, seq) => {
       toRenderer('search-files', seq, files);
     });
   }
-  return { seq, items: [...apps, ...cmds, ...sets] };
+  return { seq, items: [...apps, ...extra, ...cmds, ...sets] };
 });
 
 function openResult(r) {
@@ -755,6 +766,8 @@ function openResult(r) {
     if (r.kind === 'app') spawn('explorer.exe', ['shell:AppsFolder\\' + r.id], { detached: true, stdio: 'ignore' }).unref();
     else if (r.kind === 'setting') shell.openExternal(r.uri);
     else if (r.kind === 'file') shell.openPath(r.path);
+    else if (r.kind === 'place') spawn('explorer.exe', [r.target], { detached: true, stdio: 'ignore' }).unref();
+    else if (r.kind === 'tool') spawn('cmd.exe', ['/c', 'start', '', r.exe], { detached: true, stdio: 'ignore', windowsHide: true }).unref();
     else if (r.kind === 'web') shell.openExternal((ENGINES[cfg.searchEngine] || ENGINES.google) + encodeURIComponent(r.query));
   } catch (e) { /* ignore */ }
 }

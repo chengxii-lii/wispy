@@ -15,7 +15,7 @@ function check(name, fn) {
 }
 const must = (cond, msg) => { if (!cond) throw new Error(msg); };
 
-for (const f of ['main.js', 'preload.js', 'settings-list.js', 'renderer/app.js', 'renderer/mock.js', 'scripts/art/render.mjs', 'scripts/art/cdp.mjs']) {
+for (const f of ['main.js', 'preload.js', 'settings-list.js', 'places-list.js', 'renderer/app.js', 'renderer/mock.js', 'scripts/art/render.mjs', 'scripts/art/cdp.mjs']) {
   check(`${f} parses`, () => {
     execFileSync(process.execPath, ['--check', path.join(root, f)], { stdio: 'pipe' });
   });

@@ -1,0 +1,37 @@
+// Things Windows search finds that are not apps or settings pages: system folders and the built-in tools.
+// places: [title, shell location, extra search words]   tools: [title, program, extra search words]
+module.exports = {
+  places: [
+    ['Recycle Bin', 'shell:RecycleBinFolder', 'trash garbage deleted bin empty'],
+    ['This PC', 'shell:MyComputerFolder', 'computer my computer drives devices'],
+    ['Desktop', 'shell:Desktop', ''],
+    ['Documents', 'shell:Personal', 'my documents files'],
+    ['Downloads', 'shell:Downloads', 'downloaded'],
+    ['Pictures', 'shell:My Pictures', 'photos images'],
+    ['Music', 'shell:My Music', 'songs audio'],
+    ['Videos', 'shell:My Video', 'movies films'],
+    ['Screenshots', 'shell:Screenshots', 'snips captures'],
+    ['Network', 'shell:NetworkPlacesFolder', 'network places shares'],
+    ['Control Panel', 'shell:ControlPanelFolder', 'classic settings'],
+    ['Startup folder', 'shell:Startup', 'autostart login programs'],
+    ['Fonts folder', 'shell:Fonts', 'typefaces'],
+  ],
+  tools: [
+    ['Task Manager', 'taskmgr.exe', 'processes performance end task cpu memory'],
+    ['Device Manager', 'devmgmt.msc', 'drivers hardware'],
+    ['Disk Management', 'diskmgmt.msc', 'partitions drives format volumes'],
+    ['Services', 'services.msc', 'background'],
+    ['Event Viewer', 'eventvwr.msc', 'logs errors'],
+    ['Computer Management', 'compmgmt.msc', 'admin tools'],
+    ['Registry Editor', 'regedit.exe', 'regedit registry'],
+    ['Command Prompt', 'cmd.exe', 'cmd terminal console'],
+    ['Windows PowerShell', 'powershell.exe', 'terminal shell console'],
+    ['System Information', 'msinfo32.exe', 'specs hardware msinfo'],
+    ['System Configuration', 'msconfig.exe', 'boot startup'],
+    ['Resource Monitor', 'resmon.exe', 'cpu disk network'],
+    ['Performance Monitor', 'perfmon.exe', 'counters'],
+    ['Disk Cleanup', 'cleanmgr.exe', 'free space temp files'],
+    ['Character Map', 'charmap.exe', 'symbols special characters'],
+    ['Remote Desktop Connection', 'mstsc.exe', 'rdp remote'],
+  ],
+};

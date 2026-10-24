@@ -464,7 +464,7 @@
   // ---------------------------------------------------------------- search
   let results = [], fileResults = [], sel = 0, seq = 0;
   const iconMem = new Map(), iconFail = new Map();
-  const KIND_BONUS = { app: 8, command: 4, setting: 0, file: -6 };
+  const KIND_BONUS = { app: 8, place: 6, tool: 6, command: 4, setting: 0, file: -6 };
 
   function compose() {
     const all = results.concat(fileResults).sort((a, b) => (b.s + KIND_BONUS[b.kind]) - (a.s + KIND_BONUS[a.kind])).slice(0, 8);
@@ -477,17 +477,18 @@
     pin: ['Pin to taskbar', 'i-pin'], unpin: ['Unpin from taskbar', 'i-unpin'], uninstall: ['Uninstall', 'i-trash'],
     openwith: ['Open with…', 'i-open'], copypath: ['Copy full path', 'i-copy'], terminal: ['Open in Terminal', 'i-term'],
   };
-  const KIND_LABEL = { app: 'App', setting: 'Settings', file: 'File', web: 'Web search', command: 'Power' };
+  const KIND_LABEL = { app: 'App', setting: 'Settings', file: 'File', web: 'Web search', command: 'Power', place: 'Folder', tool: 'Windows tool' };
   function actionsFor(r) {
     if (!r) return [];
     if (r.kind === 'app') return ['open', r.canAdmin && 'admin', r.canLocation && 'location', r.spec && (r.pinned ? 'unpin' : 'pin'), 'uninstall'].filter(Boolean);
+    if (r.kind === 'tool') return ['open', 'admin'];
     if (r.kind === 'file' && r.isDir) return ['open', 'terminal', 'copypath'];
     if (r.kind === 'file') return ['open', r.canAdmin && 'admin', 'openwith', 'location', r.spec && (r.pinned ? 'unpin' : 'pin'), 'copypath'].filter(Boolean);
     return ['open'];
   }
   let paneKey = '', paneDone = null;
   function resultIcon(r) {
-    const icons = { setting: 'i-gear', file: 'i-file', web: 'i-globe', app: 'i-app', command: 'i-power' };
+    const icons = { setting: 'i-gear', file: 'i-file', web: 'i-globe', app: 'i-app', command: 'i-power', place: 'i-folder', tool: 'i-app' };
     const ic = r.kind === 'file' && r.isDir ? 'i-folder' : icons[r.kind];
     const cached = r.iconKey && iconMem.get(r.iconKey);
     return cached ? `<img src="${esc(cached)}" alt="">` : `<svg class="ic"><use href="#${ic}"/></svg>`;
