@@ -45,6 +45,11 @@ static class Native
     public delegate void WinEventProc(IntPtr hook, uint ev, IntPtr hwnd, int idObj, int idChild, uint thread, uint time);
     [DllImport("user32.dll")] public static extern IntPtr SetWinEventHook(uint min, uint max, IntPtr mod, WinEventProc cb, uint pid, uint tid, uint flags);
     [DllImport("user32.dll")] public static extern IntPtr GetParent(IntPtr h);
+    [DllImport("user32.dll")] public static extern bool GetLayeredWindowAttributes(IntPtr h, out uint key, out byte alpha, out uint flags);
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)] public struct PROCESSENTRY32 { public uint dwSize, cntUsage, th32ProcessID; public IntPtr th32DefaultHeapID; public uint th32ModuleID, cntThreads, th32ParentProcessID; public int pcPriClassBase; public uint dwFlags; [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)] public string szExeFile; }
+    [DllImport("kernel32.dll")] public static extern IntPtr CreateToolhelp32Snapshot(uint flags, uint pid);
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode)] public static extern bool Process32FirstW(IntPtr snap, ref PROCESSENTRY32 e);
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode)] public static extern bool Process32NextW(IntPtr snap, ref PROCESSENTRY32 e);
     [DllImport("user32.dll")] public static extern bool EnumChildWindows(IntPtr parent, EnumProc cb, IntPtr l);
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode)] public static extern int GetApplicationUserModelId(IntPtr process, ref uint len, StringBuilder id);
     [DllImport("user32.dll", CharSet = CharSet.Unicode)] public static extern int GetWindowText(IntPtr h, StringBuilder sb, int max);
@@ -504,6 +509,44 @@ static partial class Program
         return s;
     }
 
+    // The program that really owns a window: Steam's window belongs to steamwebhelper.exe, whose parent, steam.exe, lives in a
+    // folder above it. Walk up the parent chain while each parent sits in a folder that contains this exe; the highest such
+    // parent is the window's "home". (A browser opened from Discord is not inside Discord's folder, so it stays its own app.)
+    static Dictionary<uint, uint> parentMap;
+    static int parentMapAt;
+    static void RebuildParents()
+    {
+        Dictionary<uint, uint> m = new Dictionary<uint, uint>();
+        IntPtr snap = Native.CreateToolhelp32Snapshot(2, 0);
+        if (snap != new IntPtr(-1) && snap != IntPtr.Zero)
+        {
+            Native.PROCESSENTRY32 e = new Native.PROCESSENTRY32();
+            e.dwSize = (uint)Marshal.SizeOf(typeof(Native.PROCESSENTRY32));
+            if (Native.Process32FirstW(snap, ref e))
+                do { m[e.th32ProcessID] = e.th32ParentProcessID; } while (Native.Process32NextW(snap, ref e));
+            Native.CloseHandle(snap);
+        }
+        parentMap = m; parentMapAt = Environment.TickCount;
+    }
+    static string HomeOf(uint pid, string exe)
+    {
+        if (parentMap == null || Environment.TickCount - parentMapAt > 1500) { try { RebuildParents(); } catch { return ""; } }
+        string best = "";
+        uint p = pid;
+        for (int i = 0; i < 5; i++)
+        {
+            uint pp;
+            if (!parentMap.TryGetValue(p, out pp) || pp == 0 || pp == p) break;
+            p = pp;
+            string pe = ExeOf(p);
+            if (pe.Length == 0) break;
+            string dir = Path.GetDirectoryName(pe);
+            if (dir == null || !exe.StartsWith(dir + "\\", StringComparison.OrdinalIgnoreCase)) break;
+            if (!pe.Equals(exe, StringComparison.OrdinalIgnoreCase)) best = pe;
+        }
+        return best;
+    }
+
     static string AumidOf(uint pid)
     {
         string s = "";
@@ -552,6 +595,11 @@ static partial class Program
             if ((ex & 0x08000000) != 0 && !app) return true;
             int len = Native.GetWindowTextLength(h);
             if (len == 0) return true;
+            // Windows lists a window on the taskbar only if you could actually use it. Game overlays and recorders (Medal, Discord...) are
+            // click-through, fully transparent or 1 px windows: running, but not something you have open.
+            if ((ex & 0x20) != 0) return true;
+            if ((ex & 0x80000) != 0) { uint ck; byte al; uint lf; if (Native.GetLayeredWindowAttributes(h, out ck, out al, out lf) && (lf & 2) != 0 && al == 0) return true; }
+            if (!Native.IsIconic(h)) { Native.RECT wr; if (Native.GetWindowRect(h, out wr) && (wr.right - wr.left <= 2 || wr.bottom - wr.top <= 2)) return true; }
             StringBuilder cls = new StringBuilder(128);
             Native.GetClassName(h, cls, 128);
             string c = cls.ToString();
@@ -596,6 +644,8 @@ static partial class Program
             w["title"] = t.ToString();
             w["name"] = NameOf(exe, t.ToString());
             w["pid"] = (long)pid;
+            string home = HomeOf(pid, exe);
+            if (home.Length > 0) w["home"] = home;
             if (aumid.Length > 0) w["aumid"] = aumid;
             w["min"] = Native.IsIconic(h);
             list.Add(w);

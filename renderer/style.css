@@ -491,7 +491,7 @@ button[disabled], .pill-btn[disabled], .qs.busy button { cursor: default; }
 
 
 /* ---------------------------------------------------------------- v5: settings, row options, dragging, picker */
-#row.no-tray #tray-btn, #row.no-lang #lang-btn, #row.no-taskview #taskview-btn, #row.no-desk #desk-btn { display: none !important; }
+#row.no-tray #tray-btn, #row.no-lang #lang-btn, #row.no-taskview #taskview-btn, #row.no-desk #desk-btn, #row.no-wset #wset-btn { display: none !important; }
 #row.no-pct #st-pct { display: none; }
 #row.no-date #clk-date { display: none; }
 #clock .ic#clk-dnd { display: none; position: absolute; left: 11px; top: 50%; margin-top: -7px; width: 14px; height: 14px; opacity: .7; }

@@ -63,7 +63,7 @@ const DEFAULTS = {
   theme: 'auto', accent: 'cloud', glass: 46, iconSize: 46, magnify: 1.62,
   edgeOpen: true, edge: 'med', delay: 35, closeDelay: 35, closeAppDelay: 500, keepOpen: false, winKey: 'wispy', monitor: 'primary',
   clock24: false, seconds: false, dateFmt: 'short',
-  showTray: true, showLang: true, showBattPct: true, showTaskView: true, showDesktop: false,
+  showTray: true, showLang: true, showBattPct: true, showTaskView: true, showDesktop: false, showSettingsBtn: true,
   dnd: false, searchEngine: 'google', v: 3,
 };
 const ENGINES = {
@@ -176,7 +176,8 @@ function onHelper(m) {
     }
     case 'volume': lastVolume = { level: m.level, muted: m.muted }; toRenderer('volume', m.level, m.muted); break;
     case 'windows':
-      runWin = m.list || []; fgHwnd = m.fg || 0;
+      runWin = (m.list || []).map((w) => (/[\u200b-\u200f\u2060\ufeff]/.test(w.title) ? { ...w, title: w.title.replace(/[\u200b-\u200f\u2060\ufeff]/g, '') } : w));   // some games pad their title with zero-width spaces
+      fgHwnd = m.fg || 0;
       if (fullscreen !== !!m.full) { fullscreen = !!m.full; toRenderer('fullscreen', fullscreen); }
       pushDock();
       break;
@@ -514,7 +515,7 @@ function shortTitle(t) { const s = String(t || '').split(/ [-–—|] /).pop().t
 let dockModel = [];
 const winBrief = (wins) => (wins.length > 1 ? wins.map((w) => ({ hwnd: w.hwnd, title: w.title, min: !!w.min })) : undefined);
 // a window belongs to a pin by exe, by package, or (UWP apps inside Windows' app frame, like Settings) by AUMID
-function pinWins(p) { return runWin.filter((w) => (w.aumid && p.aumid && w.aumid === p.aumid.toLowerCase()) || pinMatches(p, w.exe)); }
+function pinWins(p) { return runWin.filter((w) => (w.aumid && p.aumid && w.aumid === p.aumid.toLowerCase()) || pinMatches(p, w.exe) || (w.home && pinMatches(p, w.home))); }
 
 function buildDock() {
   const claimed = new Set();
@@ -529,7 +530,7 @@ function buildDock() {
   const byExe = new Map();
   for (const w of runWin) {
     if (claimed.has(w.hwnd)) continue;
-    const b = path.basename(w.exe).toLowerCase();
+    const b = path.basename(w.home || w.exe).toLowerCase();   // a window belongs to its home program (steamwebhelper.exe -> steam.exe)
     if (!byExe.has(b)) byExe.set(b, []);
     byExe.get(b).push(w);
   }
@@ -537,7 +538,7 @@ function buildDock() {
   for (const [b, wins] of byExe) {
     extra.push({
       id: 'run:' + b, name: (wins[0].name && !/^\w+\.\w+$/.test(wins[0].name) ? wins[0].name : '') || shortTitle(wins[0].title) || prettyExe(wins[0].exe), pinned: false,
-      icon: iconUrl(wins[0].exe, null, wins[0].hwnd),
+      icon: iconUrl(wins[0].home || wins[0].exe, null, wins[0].home ? 0 : wins[0].hwnd),
       running: wins.length, active: wins.some((w) => w.hwnd === fgHwnd && !w.min), wins: winBrief(wins),
     });
   }
@@ -557,7 +558,7 @@ function pushDock() {
 function winsFor(id) {
   if (id.startsWith('run:')) {
     const b = id.slice(4);
-    return runWin.filter((w) => path.basename(w.exe).toLowerCase() === b);
+    return runWin.filter((w) => path.basename(w.home || w.exe).toLowerCase() === b);
   }
   const p = pinned.find((x) => x.id === id);
   if (!p) return [];

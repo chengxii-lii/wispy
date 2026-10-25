@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.0.9
+
+- **Only real apps show in the dock.** Game overlays and recorders (Medal, Discord's overlay and the like) are running but are not something you have open, so they no longer get an icon: click-through, fully transparent and 1-pixel windows are ignored, the way the Windows taskbar ignores them.
+- **One icon per app.** Apps whose window belongs to a helper process (Steam's window is `steamwebhelper.exe`) used to show up a second time next to the pinned icon. A window now counts as part of the program that started it when that program lives in a folder above it, so Steam is one icon, with its running dot. A browser opened from another app is still its own app.
+- **Settings are easy to find.** There is now a settings button at the right end of the bar (turn it off in Settings if you like). Window titles that games pad with invisible characters are tidied up too.
+
 ## v1.0.8
 
 - **Search finds the Recycle Bin, and more.** System folders (Recycle Bin, This PC, Desktop, Documents, Downloads, Pictures, Music, Videos, Screenshots, Network, Control Panel, the Startup and Fonts folders) and Windows' built-in tools (Task Manager, Device Manager, Disk Management, Services, Event Viewer, Registry Editor, Command Prompt, PowerShell, System Information and a few more) now show up as results, with the same keyboard and mouse actions as apps (tools can run as administrator). Searching "trash", "bin" or "empty" finds the Recycle Bin too.

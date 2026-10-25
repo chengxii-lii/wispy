@@ -55,7 +55,7 @@
     theme: 'auto', accent: 'cloud', glass: 46, iconSize: 46, magnify: 1.62,
     edgeOpen: true, edge: 'med', delay: 35, keepOpen: false, winKey: 'wispy', monitor: 'primary',
     clock24: false, seconds: false, dateFmt: 'short',
-    showTray: true, showLang: true, showBattPct: true, showTaskView: true, showDesktop: false,
+    showTray: true, showLang: true, showBattPct: true, showTaskView: true, showDesktop: false, showSettingsBtn: true,
     dnd: false, searchEngine: 'google',
   };
   let sysAccent = '#e4ebf3';
@@ -81,7 +81,7 @@
     CLOSE_ANIM = typeof cfg.closeAppDelay === 'number' ? cfg.closeAppDelay : 500;
     const rc = row.classList;
     rc.toggle('no-tray', !cfg.showTray); rc.toggle('no-lang', !cfg.showLang); rc.toggle('no-pct', !cfg.showBattPct);
-    rc.toggle('no-taskview', !cfg.showTaskView); rc.toggle('no-desk', !cfg.showDesktop); rc.toggle('no-date', cfg.dateFmt === 'off');
+    rc.toggle('no-taskview', !cfg.showTaskView); rc.toggle('no-desk', !cfg.showDesktop); rc.toggle('no-wset', cfg.showSettingsBtn === false); rc.toggle('no-date', cfg.dateFmt === 'off');
     $('#clock').classList.toggle('dnd', !!cfg.dnd);
     $('#sw-dnd').classList.toggle('on', !!cfg.dnd);
     tick();
@@ -437,6 +437,7 @@
     $('#clock').classList.toggle('on', m === 'cal');
     $('#tray-btn').classList.toggle('on', m === 'tray');
     $('#lang-btn').classList.toggle('on', m === 'lang');
+    $('#wset-btn').classList.toggle('on', m === 'settings');
     if (m === 'quick') openQuick();
     if (m === 'cal') openCal();
     if (m === 'settings') openSettings();
@@ -459,6 +460,7 @@
   $('#status').addEventListener('click', () => toggleMode('quick'));
   $('#clock').addEventListener('click', () => toggleMode('cal'));
   $('#tray-btn').addEventListener('click', () => toggleMode('tray'));
+  $('#wset-btn').addEventListener('click', () => toggleMode('settings'));
   $('#lang-btn').addEventListener('click', () => toggleMode('lang'));
 
   // ---------------------------------------------------------------- search
@@ -1085,6 +1087,7 @@
       { k: 'dateFmt', label: 'Date', t: 'seg', opts: [['short', 'Short'], ['long', 'Long'], ['off', 'Hidden']] },
       { k: 'showTaskView', label: 'Task view button', t: 'switch' },
       { k: 'showDesktop', label: 'Show desktop button', t: 'switch' },
+      { k: 'showSettingsBtn', label: 'wispy settings button', t: 'switch' },
       { k: 'showTray', label: 'Hidden icons button', t: 'switch' },
       { k: 'showLang', label: 'Input language button', t: 'switch' },
       { k: 'showBattPct', label: 'Battery percentage', t: 'switch' },
@@ -1532,7 +1535,7 @@
     try {
       if (!localStorage.getItem('tb-hint')) {
         localStorage.setItem('tb-hint', '1');
-        setTimeout(() => addToast({ id: -2, app: 'wispy', icon: null, title: 'Make it yours', body: 'Right-click the bar and choose wispy settings.' }), 2500);
+        setTimeout(() => addToast({ id: -2, app: 'wispy', icon: null, title: 'Make it yours', body: 'Click the gear in the bar for wispy settings.' }), 2500);
       }
     } catch (e) { /* storage unavailable */ }
   });
