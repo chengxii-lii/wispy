@@ -290,6 +290,7 @@ static partial class Program
         string cmd = Str(m, "cmd");
         switch (cmd)
         {
+            case "rehook": rehookNow = true; break;
             case "hideTaskbar": ui.BeginInvoke(new Action(HideTaskbar)); break;
             case "restoreTaskbar": ui.BeginInvoke(new Action(RestoreTaskbar)); break;
             case "focus": { IntPtr h = new IntPtr(Lng(m, "hwnd")); ui.BeginInvoke(new Action(delegate { Focus(h); })); break; }
@@ -359,13 +360,16 @@ static partial class Program
         msHook = Native.SetWindowsHookEx(14, msProc, mod, 0);
     }
 
+    static volatile bool rehookNow = false;
     static void HookLoop()
     {
         InstallHooks();
-        // Windows silently removes a low-level hook that ever answers too slowly; putting it back is cheap
+        // Windows silently removes a low-level hook that ever answers too slowly, and sleep can drop them too;
+        // putting them back is cheap: every 30 s, and straight away when asked (after waking from sleep)
         System.Windows.Forms.Timer refresh = new System.Windows.Forms.Timer();
-        refresh.Interval = 30000;
-        refresh.Tick += delegate { InstallHooks(); };
+        refresh.Interval = 1000;
+        int ticks = 0;
+        refresh.Tick += delegate { if (rehookNow || ++ticks >= 30) { rehookNow = false; ticks = 0; InstallHooks(); } };
         refresh.Start();
         Application.Run();
     }

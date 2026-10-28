@@ -46,9 +46,14 @@
     open: new Spring(0, 2.5, .8), row: new Spring(0, 3, .95),
   };
   let items = new Map(), order = [], dividerEl = null, dividerAt = -1;
-  let active = false, last = 0;
+  let active = false, last = 0, gen = 0, lastFrameAt = 0;
 
-  function wake() { if (!active) { active = true; last = performance.now(); requestAnimationFrame(frame); } }
+  // The loop sleeps when nothing moves and wake() restarts it. If the page was suspended (sleep, GPU reset) a pending
+  // animation frame can be lost, leaving `active` true with no loop behind it: the bar would then ignore everything.
+  // So wake() also restarts a loop that has not produced a frame for a while; each loop carries a generation number,
+  // so an old one that does come back stops itself.
+  function startLoop() { const g = ++gen; active = true; last = lastFrameAt = performance.now(); requestAnimationFrame((t) => frame(t, g)); }
+  function wake() { if (!active || performance.now() - lastFrameAt > 500) startLoop(); }
 
   // ---------------------------------------------------------------- settings applied to the UI
   let cfg = {
@@ -347,10 +352,12 @@
   }
 
   // ---------------------------------------------------------------- frame
-  function frame(t) {
+  function frame(t, g) {
+    if (g !== gen) return;
+    lastFrameAt = performance.now();
     const dt = Math.min(.05, (t - last) / 1000 || .016);
     last = t;
-    if (update(dt, t)) requestAnimationFrame(frame); else active = false;
+    if (update(dt, t)) requestAnimationFrame((tt) => frame(tt, g)); else active = false;
   }
 
   // one simulation + render step; returns true while something is still moving
@@ -598,14 +605,13 @@
   panels.search.addEventListener('mousemove', (e) => {
     if (e.clientX === lastMX && e.clientY === lastMY) return;
     lastMX = e.clientX; lastMY = e.clientY;
+    clearTimeout(hoverT);                     // any movement at all postpones the pane: it follows only a pointer that has stopped
     const r = e.target.closest('.res');
     if (r) {
       const i = +r.dataset.i;
       if (i !== sel) { sel = i; markSel(); }
-      clearTimeout(hoverT);
-      if (sel !== paneIdx) hoverT = setTimeout(() => { if (S.mode === 'search') renderResults(); }, 70);
+      if (sel !== paneIdx) hoverT = setTimeout(() => { if (S.mode === 'search') renderResults(); }, 220);
     } else if (e.target.closest('.sr-pane')) {
-      clearTimeout(hoverT);
       if (sel !== paneIdx) { sel = paneIdx; markSel(); }
     }
   }, { passive: true });
@@ -1507,6 +1513,7 @@
     if (S.open) { closeBar(); return; }
     openBar(true); setMode('dock'); focusSearch();
   });
+  tb.on('resume', () => { tb.pong(); S.interactive = null; startLoop(); });   // after sleep: prove we are alive, forget what we told main about click-through, restart the loop
   tb.on('blur', () => { if (S.pinned || S.searching || S.mode !== 'dock') closeBar({ launched: true }); });
   tb.on('mouse', (t) => {
     // a click somewhere: if it landed outside our UI, dismiss panels and a key-opened bar.

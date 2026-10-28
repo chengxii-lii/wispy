@@ -56,4 +56,5 @@ contextBridge.exposeInMainWorld('tb', {
   appMenu: (id) => invoke('app-menu', id),
   appAction: (id, act) => send('app-action', id, act),
   resultAction: (r, act) => invoke('result-action', r, act),
+  pong: () => send('pong'),
 });

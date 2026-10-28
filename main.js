@@ -1,6 +1,6 @@
 // wispy main process: one transparent click-through window at the bottom of the
 // primary display, a native helper for the OS-level bits, and the data the UI shows.
-const { app, BrowserWindow, screen, ipcMain, shell, Tray, Menu, nativeImage, systemPreferences, clipboard } = require('electron');
+const { app, BrowserWindow, screen, ipcMain, shell, Tray, Menu, nativeImage, systemPreferences, clipboard, powerMonitor } = require('electron');
 const { spawn, execFile } = require('child_process');
 const path = require('path');
 const fs = require('fs');
@@ -1129,8 +1129,30 @@ app.on('child-process-gone', (_e, d) => {
   if (d.type === 'GPU') setTimeout(() => { if (win && !win.isDestroyed()) win.reload(); }, 400);
 });
 
+// Waking from sleep (or unlocking) can leave wispy deaf: the window loses its click-through state or top-most order, the
+// keyboard/mouse hooks are dropped, or the page's animation loop never restarts. Put everything back, then ask the page
+// whether it is alive and reload it if it does not answer.
+let pong = true;
+ipcMain.on('pong', () => { pong = true; });
+function afterResume() {
+  if (!win || win.isDestroyed()) return;
+  try {
+    placeWindow();
+    win.setAlwaysOnTop(true, 'screen-saver');
+    win.setIgnoreMouseEvents(!interactive);
+    send({ cmd: 'rehook' });
+    lastCursor = '';
+  } catch (e) { log('resume: ' + e.message); }
+  pong = false;
+  toRenderer('resume');
+  setTimeout(() => { if (!pong && win && !win.isDestroyed()) { log('page silent after resume: reloading'); win.reload(); } }, 2000);
+}
+function onResume() { setTimeout(afterResume, 1200); setTimeout(afterResume, 6000); }
+
 app.whenReady().then(() => {
   log('start ' + app.getVersion());
+  powerMonitor.on('resume', onResume);
+  powerMonitor.on('unlock-screen', onResume);
   readPinned();
   startHelper();
   createWindow();

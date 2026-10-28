@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.0.10
+
+- **Wakes up properly after sleep.** After the PC slept, wispy could stop reacting to the cursor and could not even be closed. The page's animation loop could lose a frame while suspended and never restart. It now restarts itself as soon as anything happens, and when Windows resumes (or you unlock) wispy puts its window back on top, re-applies click-through, re-installs the keyboard and mouse hooks, checks that the page answers, and reloads it if it does not.
+- **The result pane no longer jumps.** In search, the pane on the right now follows a pointer that has stopped on a result (about a fifth of a second), not one that is just passing over rows on its way to a button.
+
 ## v1.0.9
 
 - **Only real apps show in the dock.** Game overlays and recorders (Medal, Discord's overlay and the like) are running but are not something you have open, so they no longer get an icon: click-through, fully transparent and 1-pixel windows are ignored, the way the Windows taskbar ignores them.

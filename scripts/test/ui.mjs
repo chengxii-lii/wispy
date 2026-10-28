@@ -128,6 +128,23 @@ await group('dock: clicking apps', async (p) => {
   check('clicking elsewhere dismisses the menu', (await p.eval(`!window.__wispy.S.ctx`)));
 });
 
+await group('dock: recovers when the page loses its animation frames (waking from sleep)', async (p) => {
+  await edge(p);
+  await p.eval(`window.__raf = window.requestAnimationFrame; window.requestAnimationFrame = () => 0; 1`);   // frames stop arriving
+  await sleep(1000);
+  await p.eval(`window.requestAnimationFrame = window.__raf; 1`);
+  await move(p, 460, 150); await sleep(300);
+  await edge(p);
+  check('the dock opens again after frames were lost', (await S(p, 'open')) === true);
+  const [x, y] = await centre(p, '#items .item', 2);
+  await move(p, x, y); await sleep(600);
+  const big = await rect(p, '#items .item', 2), small = await rect(p, '#items .item', 6);
+  check('and it animates and magnifies again', big.w > small.w * 1.15, `${big.w} vs ${small.w}`);
+  await p.eval(`window.tbMock.emit('resume'); 1`); await sleep(300);
+  await move(p, x + 4, y); await sleep(300);
+  check('a resume signal restarts the loop cleanly', (await S(p, 'open')) === true);
+});
+
 await group('dock: an app closing', async (p) => {
   await edge(p);
   const d0 = await p.eval(`window.tb.init().then((i) => i.dock)`);
@@ -198,10 +215,10 @@ await group('search: hover responds at once', async (p) => {
   await sleep(50);
   const at50 = await p.eval(`document.querySelector('#p-search .res.sel').dataset.i`);
   check('the highlight is on the hovered row within 50 ms', at50 === '3', 'row ' + at50);
-  await sleep(250);
+  await sleep(450);
   const pane = await p.eval(`document.querySelector('#p-search .sp-hero b').textContent`);
   const row = await p.eval(`document.querySelectorAll('#p-search .res')[3].querySelector('b').textContent`);
-  check('and the pane follows once the pointer rests', pane === row, pane + ' / ' + row);
+  check('and the pane follows once the pointer has stopped', pane === row, pane + ' / ' + row);
   // sweep down the list: the highlight must track the pointer row for row
   let tracked = 0, total = 0;
   for (let i = 0; i < 6; i++) {
