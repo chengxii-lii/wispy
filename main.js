@@ -44,7 +44,7 @@ let prevFg = 0;
 let hasFocus = false;
 let interactive = false;
 let lastCursor = '';
-let lastVolume = null;
+let lastVolume = null, lastMedia = null;
 let lastLang = null;
 let lastTray = [];
 
@@ -63,7 +63,7 @@ const DEFAULTS = {
   theme: 'auto', accent: 'cloud', glass: 46, iconSize: 46, magnify: 1.62,
   edgeOpen: true, edge: 'med', delay: 35, closeDelay: 35, closeAppDelay: 500, keepOpen: false, winKey: 'wispy', monitor: 'primary',
   clock24: false, seconds: false, dateFmt: 'short',
-  showTray: true, showLang: true, showBattPct: true, showTaskView: true, showDesktop: false, showSettingsBtn: true,
+  showTray: true, showLang: true, showBattPct: true, showTaskView: true, showDesktop: false, showSettingsBtn: true, nowPlaying: true,
   dnd: false, searchEngine: 'google', v: 3,
 };
 const ENGINES = {
@@ -174,6 +174,8 @@ function onHelper(m) {
       toRenderer('mouse', m.t || 0);
       break;
     }
+    case 'media': lastMedia = { playing: !!m.playing, title: m.title || '', artist: m.artist || '', app: m.app || '' }; toRenderer('media', lastMedia); break;
+    case 'level': toRenderer('level', m.v); break;
     case 'volume': lastVolume = { level: m.level, muted: m.muted }; toRenderer('volume', m.level, m.muted); break;
     case 'windows':
       runWin = (m.list || []).map((w) => (/[\u200b-\u200f\u2060\ufeff]/.test(w.title) ? { ...w, title: w.title.replace(/[\u200b-\u200f\u2060\ufeff]/g, '') } : w));   // some games pad their title with zero-width spaces
@@ -1097,7 +1099,7 @@ ipcMain.on('set-lang', (_e, key) => send({ cmd: 'setLangKey', key }));
 ipcMain.on('tray-click', (_e, key, button) => send({ cmd: 'trayClick', key, button }));
 
 ipcMain.handle('init', () => ({
-  accent: accent(), dock: buildDock(), volume: lastVolume, packaged: app.isPackaged,
+  accent: accent(), dock: buildDock(), volume: lastVolume, media: lastMedia, packaged: app.isPackaged,
   lang: lastLang, tray: lastTray, history: currentHistory(), config: cfg,
 }));
 

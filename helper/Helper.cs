@@ -235,6 +235,7 @@ static partial class Program
         guard.Start();
 
         StartExtras();
+        StartMedia();
         Emit("ready", null);
         Application.Run();
         RestoreTaskbar();

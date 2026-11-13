@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.12
+
+- **Now playing.** While something plays (Spotify, a YouTube tab, any app that shows up in Windows' media controls), the white bar stays faintly in view with the title and artist in small text above it. The bar thickens and glows with the loudness of whatever comes out of your speakers. Turn it off in Settings → Now playing above the bar.
+
 ## v1.0.11
 
 - **The dock opens over the white bar only.** It used to open anywhere along the bottom edge as wide as the dock. Now you have to touch the edge where the white bar is (it leans toward you a little, and the zone follows it).
