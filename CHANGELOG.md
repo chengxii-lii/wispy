@@ -1,12 +1,23 @@
 # Changelog
 
+## v1.0.14
+
+- **A real equalizer.** The helper now listens to what your speakers play (WASAPI loopback, 32 bands, only while the bar is visible), so the bar moves with the music instead of following one loudness number. Five styles: wave (eight travelling sines fed by different parts of the spectrum, so bass swells and treble ripples), bars, mirror, dots and pulse. Sensitivity, smoothness, detail and colour are settings, and Settings > Music has a live preview.
+- **Bar settings.** Show the bar on hover, while music plays, or always, with its own resting opacity. Width, thickness, hover opacity and colour. Leaning toward the cursor on or off. Lock the dock open.
+- **The title above the bar now has a card.** Hover the title for the cover, title, artist, a progress bar you can click to seek, and previous, play or pause and next. Options for when the title shows, the artist, text size and opacity, and the cover. Paused media stays reachable, dimmed.
+- **Live activities.** A short line above the bar when the charger is plugged in or out, when the battery gets low (20, 10 and 5 percent), and when the volume changes, with a meter. Each is a switch, and so is how long they stay.
+- **Timer.** Type `timer 10m` (or 90s, 1h30m, 1:30) in search. It counts down above the bar, then says so, with a notification and a chime.
+- **Scroll over the bar to change the volume** (off by default).
+- **Settings in four tabs** (General, Bar, Music, Extras). Options only appear when the thing they belong to is on.
+- The bar sits 3 px higher so the equalizer has room below it. `npm run test:ui` now has about 250 checks.
+
 ## v1.0.13
 
 - **Now playing is calmer.** The title above the white bar only shows in the normal hover state, like the bar itself, instead of staying on screen while music plays. The bar now wiggles with the sound (a line the same size as the bar that ripples with the loudness) instead of getting thicker and glowing.
 
 ## v1.0.12
 
-- **Now playing.** While something plays (Spotify, a YouTube tab, any app that shows up in Windows' media controls), the white bar stays faintly in view with the title and artist in small text above it. The bar thickens and glows with the loudness of whatever comes out of your speakers. Turn it off in Settings → Now playing above the bar.
+- **Now playing.** While something plays (Spotify, a YouTube tab, any app that shows up in Windows' media controls), the white bar stays faintly in view with the title and artist in small text above it. The bar thickens and glows with the loudness of whatever comes out of your speakers. Turn it off in Settings â†’ Now playing above the bar.
 
 ## v1.0.11
 

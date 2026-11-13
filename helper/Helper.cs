@@ -292,6 +292,8 @@ static partial class Program
         switch (cmd)
         {
             case "rehook": rehookNow = true; break;
+            case "viz": SetViz(m.ContainsKey("on") && Convert.ToBoolean(m["on"])); break;
+            case "mediaCmd": MediaCommand(Str(m, "action"), m.ContainsKey("pos") ? Convert.ToDouble(m["pos"]) : 0); break;
             case "hideTaskbar": ui.BeginInvoke(new Action(HideTaskbar)); break;
             case "restoreTaskbar": ui.BeginInvoke(new Action(RestoreTaskbar)); break;
             case "focus": { IntPtr h = new IntPtr(Lng(m, "hwnd")); ui.BeginInvoke(new Action(delegate { Focus(h); })); break; }

@@ -4,7 +4,7 @@
 
 <br>
 
-[![Version](https://img.shields.io/badge/version-1.0.13-8fa3ba?style=flat-square)](https://github.com/chengxii-lii/wispy/releases)
+[![Version](https://img.shields.io/badge/version-1.0.14-8fa3ba?style=flat-square)](https://github.com/chengxii-lii/wispy/releases)
 [![Website](https://img.shields.io/badge/website-chengxii--lii.github.io%2Fwispy-8fa3ba?style=flat-square)](https://chengxii-lii.github.io/wispy/)
 [![Windows 11](https://img.shields.io/badge/Windows-11-8fa3ba?style=flat-square)](#install)
 [![License: MIT](https://img.shields.io/badge/license-MIT-8fa3ba?style=flat-square)](LICENSE)
@@ -54,7 +54,7 @@ A thin pill that rises to meet your cursor, opens into a dock, and holds search,
 </tr>
 </table>
 
-**Also:** your pinned apps, in your Windows order · running apps with dots · drag to reorder · a window picker for apps with several windows · right-click menus like the taskbar's (close, end task, run as administrator, pin) · hidden-icons menu · input language switcher · Task view and Show desktop · power menu · no telemetry.
+**Also:** your pinned apps, in your Windows order Â· running apps with dots Â· drag to reorder Â· a window picker for apps with several windows Â· right-click menus like the taskbar's (close, end task, run as administrator, pin) Â· hidden-icons menu Â· input language switcher Â· Task view and Show desktop Â· power menu Â· no telemetry.
 
 ## Install
 
@@ -73,15 +73,19 @@ On first run wispy hides the Windows taskbar and takes over. Quit it from the ri
 | Move toward the bottom edge | A pill fades in and leans toward your cursor |
 | Touch the bottom edge | The dock opens, with search, status and the clock below it |
 | <kbd>Win</kbd> | Open wispy with search ready (tap again to close). Set it to open Start instead in Settings |
-| <kbd>Enter</kbd> · <kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>Enter</kbd> | Open the result · run it as administrator |
+| <kbd>Enter</kbd> Â· <kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>Enter</kbd> | Open the result Â· run it as administrator |
 | Click an app with several windows | Pick the window |
 | Drag a pinned app | Reorder the dock |
 | Right-click anything | The menu you'd expect there. Right-click empty bar for **wispy settings** |
 | <kbd>Esc</kbd> | Close |
+| Hover the pill while music plays | The title above it, a bar that moves with the sound, and a card with cover and controls when you hover the title |
+| Type `timer 10m` in search | A countdown above the bar |
 
 ## Make it yours
 
 Right-click the empty bar and choose **wispy settings**. Everything saves as you change it, and **Restore defaults** is one click. Settings live in `%APPDATA%\wispy\config.json`.
+
+Settings have four tabs. **General** is the dock, clock and buttons. **Bar** is when the pill shows (on hover, while music plays, or always), its width, thickness, colour and opacity, whether it leans toward the cursor, and locking the dock open. **Music** is the title above the bar, the card, and the equalizer (wave, bars, mirror, dots, pulse) with sensitivity, smoothness and colour. **Extras** is live activities (charger, low battery, volume), the timer, and scrolling over the bar to change the volume. Everything is a switch, so turn off what you don't want.
 
 <details>
 <summary><b>How it works</b></summary>

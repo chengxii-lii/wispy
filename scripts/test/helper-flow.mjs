@@ -10,9 +10,9 @@ import { fileURLToPath } from 'node:url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const helper = process.argv[2] || path.join(ROOT, 'helper', 'wispy-helper.exe');
 const h = spawn(helper, ['--self', 'x:\\none.exe'], { stdio: ['pipe', 'pipe', 'inherit'] });
-let last = null; const errors = [];
+let last = null, spec = null, media = null; const errors = [];
 readline.createInterface({ input: h.stdout }).on('line', (l) => {
-  try { const m = JSON.parse(l); if (m.ev === 'windows') last = m; if (m.ev === 'error') errors.push(m.msg); } catch { /* not json */ }
+  try { const m = JSON.parse(l); if (m.ev === 'windows') last = m; if (m.ev === 'spectrum') spec = m; if (m.ev === 'media') media = m; if (m.ev === 'error') errors.push(m.msg); } catch { /* not json */ }
 });
 const send = (o) => h.stdin.write(JSON.stringify(o) + '\n');
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -53,6 +53,16 @@ check('and again after waiting', t >= 0, t + 'ms');
 send({ cmd: 'close', hwnd: H });
 t = await waitFor(() => !find(/charmap\.exe/i));
 check('closing removes it from the list', t >= 0 && t < 600, t + 'ms');
+
+// the equalizer feed: nothing until asked, then 32 bands
+check('the media session is reported', !!media && typeof media.title === 'string' && 'canNext' in media && 'dur' in media);
+spec = null; await sleep(400);
+check('no spectrum until asked for', spec === null);
+send({ cmd: 'viz', on: true });
+t = await waitFor(() => spec, 2000);
+check('the spectrum arrives once asked', t >= 0 && Array.isArray(spec.b) && spec.b.length === 32 && spec.b.every((v) => v >= 0 && v <= 100), t >= 0 ? t + 'ms' : 'none');
+send({ cmd: 'viz', on: false }); await sleep(300); spec = null; await sleep(500);
+check('...and stops when told to', spec === null);
 
 check('no helper errors', errors.length === 0, errors.join('; '));
 try { execSync('taskkill /F /IM charmap.exe', { stdio: 'ignore' }); } catch { /* already closed */ }

@@ -19,6 +19,8 @@ contextBridge.exposeInMainWorld('tb', {
   open: (r) => send('open-result', r),
   icon: (src, key) => invoke('icon', src, key),
   volume: (o) => send('volume', o),
+  viz: (on) => send('viz', on),
+  mediaCmd: (action, pos) => send('media-cmd', action, pos),
   wifi: () => invoke('wifi'),
   wifiNetworks: () => invoke('wifi-networks'),
   wifiConnect: (ssid) => invoke('wifi-connect', ssid),

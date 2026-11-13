@@ -15,13 +15,13 @@ function check(name, fn) {
 }
 const must = (cond, msg) => { if (!cond) throw new Error(msg); };
 
-for (const f of ['main.js', 'preload.js', 'settings-list.js', 'places-list.js', 'renderer/app.js', 'renderer/mock.js', 'scripts/art/render.mjs', 'scripts/art/cdp.mjs']) {
+for (const f of ['main.js', 'preload.js', 'settings-list.js', 'places-list.js', 'renderer/app.js', 'renderer/notch.js', 'renderer/mock.js', 'scripts/art/render.mjs', 'scripts/art/cdp.mjs']) {
   check(`${f} parses`, () => {
     execFileSync(process.execPath, ['--check', path.join(root, f)], { stdio: 'pipe' });
   });
 }
 
-for (const f of ['package.json', 'renderer/index.html', 'renderer/style.css', 'helper/Helper.cs', 'helper/Extras.cs', 'helper/Extras2.cs',
+for (const f of ['package.json', 'renderer/index.html', 'renderer/style.css', 'helper/Helper.cs', 'helper/Extras.cs', 'helper/Extras2.cs', 'helper/Media.cs',
   'assets/icon.ico', 'scripts/install.ps1', 'scripts/uninstall.ps1', 'scripts/restore-taskbar.ps1', 'scripts/build-helper.ps1', 'LICENSE', 'README.md', 'CHANGELOG.md']) {
   check(`${f} exists`, () => must(fs.existsSync(path.join(root, f)), 'missing'));
 }
@@ -34,7 +34,7 @@ check('version matches the changelog', () => {
 
 check('every id the renderer looks up exists in the markup', () => {
   const html = read('renderer/index.html');
-  const js = read('renderer/app.js');
+  const js = read('renderer/app.js') + read('renderer/notch.js');
   const ids = new Set([...html.matchAll(/\bid="([^"]+)"/g)].map((m) => m[1]));
   const made = new Set([...js.matchAll(/\.id = '([^']+)'/g)].map((m) => m[1])); // ids created in script
   const missing = [...new Set([...js.matchAll(/\$\('#([A-Za-z][\w-]*)'\)/g)].map((m) => m[1]))].filter((id) => !ids.has(id) && !made.has(id));
@@ -44,7 +44,7 @@ check('every id the renderer looks up exists in the markup', () => {
 check('every IPC channel the renderer calls is exposed by the preload', () => {
   const pre = read('preload.js');
   const exposed = new Set([...pre.matchAll(/^\s{2}(\w+):/gm)].map((m) => m[1]));
-  const called = new Set([...read('renderer/app.js').matchAll(/\btb\.(\w+)\(/g)].map((m) => m[1]));
+  const called = new Set([...(read('renderer/app.js') + read('renderer/notch.js')).matchAll(/\btb\.(\w+)\(/g)].map((m) => m[1]));
   const missing = [...called].filter((n) => !exposed.has(n));
   must(!missing.length, 'tb.' + missing.join(', tb.') + ' not in preload.js');
 });

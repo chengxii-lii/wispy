@@ -12,7 +12,8 @@
   let BASE = 46, MAXS = 1.62;
   const GAP = 6, PAD = 9, SIGMA = 58;
   let DOCK_H = BASE + PAD * 2;
-  const PILL_W = 132, PILL_H = 5, PILL_BOTTOM = 6, LIFT = 9;
+  let PILL_W = 132, PILL_H = 5;
+  const PILL_BOTTOM = 9, LIFT = 9;     // the visualiser can dip below the bar, so it sits a little off the edge
   const ROW_B = 10, ROW_H = 44, DOCK_BOTTOM = ROW_B + ROW_H + 8;
   const Z1 = 150;
   let Z2 = 12;          // distance from the screen's bottom edge: peek zone, open zone
@@ -47,42 +48,6 @@
   };
   let items = new Map(), order = [], dividerEl = null, dividerAt = -1;
 
-  // now playing: one small line above the bar, and the bar itself follows the loudness of what comes out of the speakers
-  const npEl = $('#np'), npT = npEl.querySelector('.np-t');
-  let np = { playing: false, text: '' }, npA = 0, npShown = '', npSwap = 0;
-  let lv = 0, lvT = 0, lvMax = .1, wph = 0;   // shown level, level asked for, running peak used to normalise (so it works at any volume), wave phase
-  const waveEl = $('.bar-wave'), wavePath = waveEl.querySelector('path');
-  const WAVE_PTS = 33;
-  // a line the width of the bar that wiggles: two travelling sines, tapered to nothing at the ends, as tall as the sound is loud
-  function drawWave(a, ph) {
-    let d = '';
-    for (let i = 0; i < WAVE_PTS; i++) {
-      const u = i / (WAVE_PTS - 1), x = 2.5 + u * 127;
-      const env = Math.sin(Math.PI * u);
-      const y = 12 + a * env * (.62 * Math.sin(u * 17 + ph) + .38 * Math.sin(u * 29 - ph * 1.37));
-      d += (i ? 'L' : 'M') + x.toFixed(1) + ' ' + y.toFixed(2);
-    }
-    wavePath.setAttribute('d', d);
-  }
-  function setMedia(m) {
-    const text = m.title ? (m.artist ? m.title + ' \u00b7 ' + m.artist : m.title) : '';
-    np = { playing: !!m.playing && !!text, text: text || np.text };
-    if (np.playing && np.text !== npShown) {
-      const tok = ++npSwap;
-      if (!npShown) { npT.textContent = npShown = np.text; }
-      else {
-        npT.classList.add('swap');
-        setTimeout(() => { if (tok !== npSwap) return; npT.textContent = npShown = np.text; npT.classList.remove('swap'); }, 200);
-      }
-    }
-    wake();
-  }
-  function setLevel(v) {
-    lvMax = Math.max(lvMax * .997, v, .08);
-    const x = Math.min(1, v / lvMax);
-    lvT = x < .06 ? 0 : Math.pow(x, 1.25);
-    if (S.inZ1 || S.open || sp.presence.x > .02 || lv > 0) wake();     // nothing to draw while the bar is out of sight
-  }
   let active = false, last = 0, gen = 0, lastFrameAt = 0;
 
   // The loop sleeps when nothing moves and wake() restarts it. If the page was suspended (sleep, GPU reset) a pending
@@ -98,6 +63,11 @@
     edgeOpen: true, edge: 'med', delay: 35, keepOpen: false, winKey: 'wispy', monitor: 'primary',
     clock24: false, seconds: false, dateFmt: 'short',
     showTray: true, showLang: true, showBattPct: true, showTaskView: true, showDesktop: false, showSettingsBtn: true, nowPlaying: true,
+    barShow: 'hover', barRest: 40, barOpacity: 100, barWidth: 132, barThick: 5, barColor: 'auto', barLean: true,
+    npShow: 'hover', npArtist: true, npSize: 12, npOpacity: 90,
+    vizStyle: 'wave', vizSens: 100, vizSmooth: 50, vizBars: 24, vizColor: 'bar', vizAny: false,
+    mediaCard: true, cardArt: true,
+    actCharge: true, actLowBatt: true, actVolume: true, actTime: 2600, timerOn: true, scrollVol: false,
     dnd: false, searchEngine: 'google',
   };
   let sysAccent = '#e4ebf3';
@@ -119,6 +89,11 @@
     BASE = cfg.iconSize; DOCK_H = BASE + PAD * 2; MAXS = cfg.magnify;
     Z2 = { low: 6, med: 12, high: 24 }[cfg.edge] || 12;
     DWELL = cfg.delay;
+    PILL_W = clamp(+cfg.barWidth || 132, 60, 360); PILL_H = clamp(+cfg.barThick || 5, 3, 14);
+    if (cfg.barColor === 'white') rootEl.style.setProperty('--pill-c', '#ffffff');
+    else if (cfg.barColor === 'accent') rootEl.style.setProperty('--pill-c', 'var(--accent)');
+    else rootEl.style.removeProperty('--pill-c');
+    if (typeof nx !== 'undefined') nx.applyConfig();
     LEAVE = typeof cfg.closeDelay === 'number' ? cfg.closeDelay : 35;
     CLOSE_ANIM = typeof cfg.closeAppDelay === 'number' ? cfg.closeAppDelay : 500;
     const rc = row.classList;
@@ -131,6 +106,13 @@
     wake();
   }
   function setCfg(patch) { applyConfig(patch); tb.setConfig(patch); }
+
+  // the notch side of the bar: now playing, visualiser, live activities, timer (renderer/notch.js)
+  const nx = window.WispyNotch({
+    $, clamp, lerp, smooth, esc, tb, cfg, S, sp, bar, pillEl, wake: () => wake(), toast: (n) => addToast(n),
+    getVol: () => vol,
+    setVolume: (level) => { vol = { level, muted: false }; tb.volume({ level, muted: false }); renderVol(); nx.volumeChanged(level, false); },
+  });
 
   // ---------------------------------------------------------------- zones
   function barHalfWidth() { return Math.max(layoutDockW(false), row.offsetWidth) / 2; }
@@ -414,16 +396,11 @@
     if (S.open !== S.rep) { S.rep = S.open; tb.barOpen(S.open); }
 
     const open = S.open, inZ1 = S.inZ1;
-    const npOn = cfg.nowPlaying !== false && np.playing && !S.fullscreen && S.mode === 'dock';
-    npA += ((npOn ? 1 : 0) - npA) * (1 - Math.exp(-dt * 8));
-    if (Math.abs((npOn ? 1 : 0) - npA) < .004) npA = npOn ? 1 : 0;
-    const lt = npOn && (inZ1 || open || sp.presence.x > .02) ? lvT : 0;
-    lv += (lt - lv) * (1 - Math.exp(-dt * (lt > lv ? 26 : 10)));
-    if (lt === 0 && lv < .004) lv = 0;
-    wph += dt * (5 + lv * 9);
-    sp.presence.step(inZ1 || open ? 1 : 0, dt);
+    const nz = nx.step({ dt, inZ1, open, o: sp.open.x, presence: sp.presence.x });
+    const resting = nz.rest > 0 && !inZ1 && !open && !nz.force;      // the bar parked at its resting opacity (Bar settings)
+    sp.presence.step(inZ1 || open || nz.force ? 1 : nz.rest, dt);
     sp.lift.step(open ? 0 : LIFT * Math.pow(S.s, .8), dt);
-    sp.tx.step(inZ1 && !open ? clamp((S.cx - innerWidth / 2) * .1, -24, 24) : 0, dt);
+    sp.tx.step(inZ1 && !open && cfg.barLean !== false ? clamp((S.cx - innerWidth / 2) * .1, -24, 24) : 0, dt);
     sp.open.step(open ? 1 : 0, dt);
     sp.row.step(open ? 1 : 0, dt);
     let err = 0;
@@ -433,24 +410,19 @@
 
     const o = sp.open.x, e = clamp(o, 0, 1.02);
     const dockW = layoutDockW(true);
-    const w = lerp(PILL_W, dockW, e), h = lerp(PILL_H, DOCK_H, e);
+    const pu = nx.pulse();
+    const w = lerp(PILL_W * pu.w, dockW, e), h = lerp(PILL_H + pu.h, DOCK_H, e);
     const y = lerp(PILL_BOTTOM + sp.lift.x, DOCK_BOTTOM, e);
-    const rad = lerp(PILL_H / 2, DOCK_H / 2, smooth(0, .5, o));
+    const rad = lerp((PILL_H + pu.h) / 2, DOCK_H / 2, smooth(0, .5, o));
     const vis = sp.presence.x > .01 || o > .01;
     bar.style.visibility = vis ? 'visible' : 'hidden';
-    bar.style.opacity = clamp(sp.presence.x, 0, 1).toFixed(3);
+    bar.style.opacity = (clamp(sp.presence.x, 0, 1) * clamp(cfg.barOpacity / 100, .1, 1)).toFixed(3);
     bar.style.width = w.toFixed(1) + 'px';
     bar.style.height = h.toFixed(1) + 'px';
     bar.style.borderRadius = rad.toFixed(1) + 'px';
     bar.style.transform = `translate3d(${(sp.tx.x - w / 2).toFixed(1)}px, ${(-y).toFixed(1)}px, 0)`;
-    const wb = smooth(0, .03, lv);     // 0 = plain bar, 1 = wiggling line
-    pillEl.style.opacity = ((1 - smooth(0, .4, o)) * (1 - wb)).toFixed(3);
-    waveEl.style.opacity = (wb * (1 - smooth(0, .4, o))).toFixed(3);
-    if (wb > 0) drawWave(lv * 7.5, wph);
-    const npo = npA * clamp(sp.presence.x, 0, 1) * (1 - smooth(0, .3, o));
-    npEl.style.opacity = npo.toFixed(3);
-    npEl.style.visibility = npo > .01 ? 'visible' : 'hidden';
-    if (npo > .01) npEl.style.transform = `translate3d(calc(-50% + ${sp.tx.x.toFixed(1)}px), ${(-(y + h + 9)).toFixed(1)}px, 0)`;
+    nx.draw({ dt, y, h: PILL_H + pu.h, o, tx: sp.tx.x, presence: sp.presence.x, W: PILL_W, T: PILL_H });
+    pillEl.style.opacity = ((1 - smooth(0, .4, o)) * nx.pillMul()).toFixed(3);
     bodyEl.style.opacity = smooth(.05, .55, o).toFixed(3);
     itemsEl.style.pointerEvents = o > .6 && S.mode === 'dock' ? 'auto' : 'none';
 
@@ -479,8 +451,8 @@
     toastsEl.style.transform = `translate3d(-50%, ${(-lerp(30 + sp.lift.x * .6, DOCK_BOTTOM + DOCK_H + 34, e)).toFixed(1)}px, 0)`;
 
     updateInteractive();
-    if (err > .002 || open || inZ1 || lv > 0 || lt > 0 || npA !== (npOn ? 1 : 0) || sp.presence.x > .01) return true;
-    bar.style.visibility = 'hidden';
+    if (err > .002 || open || inZ1 || nz.need || nz.force || (sp.presence.x > .01 && !resting)) return true;
+    if (!resting) bar.style.visibility = 'hidden';
     return false;
   }
 
@@ -495,13 +467,14 @@
     for (const k in panels) if (panels[k].classList.contains('show')) add(panels[k]);
     if (S.ctx) { const c = document.getElementById('ctx'); if (c) add(c); }
     toastsEl.querySelectorAll('.toast').forEach(add);
+    nx.rects().forEach((r) => rs.push(r));
     const key = rs.map((r) => r.join(',')).join(';');
     if (key !== hitKey) { hitKey = key; tb.hitRects(rs); }
   }
   tb.on('interactive', (v) => { S.interactive = v; });   // main switched it on ahead of us
   function updateInteractive() {
     sendHitRects();
-    let want = S.dragging;
+    let want = S.dragging || (S.inside && nx.hit(S.cx, S.cy));
     if (!want && S.inside) {
       const el = document.elementFromPoint(S.cx, S.cy);
       want = !!(el && (el.closest('.hit') || (el.closest('#items') && itemsEl.style.pointerEvents === 'auto')));
@@ -550,9 +523,24 @@
   // ---------------------------------------------------------------- search
   let results = [], fileResults = [], sel = 0, seq = 0;
   const iconMem = new Map(), iconFail = new Map();
-  const KIND_BONUS = { app: 8, place: 6, tool: 6, command: 4, setting: 0, file: -6 };
+  const KIND_BONUS = { app: 8, place: 6, tool: 6, command: 4, setting: 0, file: -6, timer: 20 };
 
+  // "timer 10m" starts a countdown above the bar
+  function timerItems() {
+    if (!cfg.timerOn) return [];
+    const m = /^(?:timer|tm|countdown)\s*(.*)$/i.exec(q.value.trim());
+    if (!m) return [];
+    const out = [], run = nx.timer();
+    const mk = (ms, label) => ({ kind: 'timer', title: 'Start a ' + (ms >= 3600000 ? (ms / 3600000).toFixed(ms % 3600000 ? 1 : 0).replace(/\.0$/, '') + ' hour' : ms >= 60000 ? Math.round(ms / 60000) + ' minute' : Math.round(ms / 1000) + ' second') + ' timer', sub: label, ms, s: 100, id: 'timer-' + ms });
+    const ms = m[1] ? nx.parseTimer(m[1]) : null;
+    if (ms) out.push(mk(ms, 'Counts down above the bar'));
+    else if (!m[1]) [[5, 'Quick break'], [10, 'Tea'], [25, 'Focus session']].forEach(([mins, l]) => out.push(mk(mins * 60000, l)));
+    if (run) out.push({ kind: 'timer', title: 'Stop the timer', sub: 'Running: ' + Math.ceil(run.left / 60) + ' min left', stop: true, s: 99, id: 'timer-stop' });
+    return out;
+  }
   function compose() {
+    const tm = timerItems();
+    if (tm.length) return tm.concat([{ kind: 'web', title: 'Search the web for \u201c' + q.value.trim() + '\u201d', sub: 'Google', query: q.value.trim() }]);
     const all = results.concat(fileResults).sort((a, b) => (b.s + KIND_BONUS[b.kind]) - (a.s + KIND_BONUS[a.kind])).slice(0, 8);
     return all.concat([{ kind: 'web', title: 'Search the web for “' + q.value.trim() + '”', sub: 'Google', query: q.value.trim() }]);
   }
@@ -561,11 +549,12 @@
   const ACTIONS = {
     open: ['Open', 'i-open'], admin: ['Run as administrator', 'i-shield'], location: ['Open file location', 'i-folder'],
     pin: ['Pin to taskbar', 'i-pin'], unpin: ['Unpin from taskbar', 'i-unpin'], uninstall: ['Uninstall', 'i-trash'],
-    openwith: ['Open with…', 'i-open'], copypath: ['Copy full path', 'i-copy'], terminal: ['Open in Terminal', 'i-term'],
+    openwith: ['Open with…', 'i-open'], copypath: ['Copy full path', 'i-copy'], terminal: ['Open in Terminal', 'i-term'], start: ['Start', 'i-timer'], stop: ['Stop', 'i-x'],
   };
-  const KIND_LABEL = { app: 'App', setting: 'Settings', file: 'File', web: 'Web search', command: 'Power', place: 'Folder', tool: 'Windows tool' };
+  const KIND_LABEL = { app: 'App', setting: 'Settings', file: 'File', web: 'Web search', command: 'Power', place: 'Folder', tool: 'Windows tool', timer: 'Timer' };
   function actionsFor(r) {
     if (!r) return [];
+    if (r.kind === 'timer') return [r.stop ? 'stop' : 'start'];
     if (r.kind === 'app') return ['open', r.canAdmin && 'admin', r.canLocation && 'location', r.spec && (r.pinned ? 'unpin' : 'pin'), 'uninstall'].filter(Boolean);
     if (r.kind === 'tool') return ['open', 'admin'];
     if (r.kind === 'file' && r.isDir) return ['open', 'terminal', 'copypath'];
@@ -574,7 +563,7 @@
   }
   let paneKey = '', paneDone = null;
   function resultIcon(r) {
-    const icons = { setting: 'i-gear', file: 'i-file', web: 'i-globe', app: 'i-app', command: 'i-power', place: 'i-folder', tool: 'i-app' };
+    const icons = { setting: 'i-gear', file: 'i-file', web: 'i-globe', app: 'i-app', command: 'i-power', place: 'i-folder', tool: 'i-app', timer: 'i-timer' };
     const ic = r.kind === 'file' && r.isDir ? 'i-folder' : icons[r.kind];
     const cached = r.iconKey && iconMem.get(r.iconKey);
     return cached ? `<img src="${esc(cached)}" alt="">` : `<svg class="ic"><use href="#${ic}"/></svg>`;
@@ -633,7 +622,7 @@
   }
   async function runAction(r, a) {
     if (!r) return;
-    if (a === 'open') { activate(r); return; }
+    if (a === 'open' || a === 'start' || a === 'stop') { activate(r); return; }
     const res = await tb.resultAction(r, a);
     const key = r.kind + ':' + r.title + ':' + (r.path || r.id || '');
     if (a === 'pin' || a === 'unpin') {
@@ -703,6 +692,7 @@
   function activate(r) {
     if (!r) return;
     if (r.kind === 'command') { const rr = row.getBoundingClientRect(); powerRun(r.cmd, rr.x + rr.width / 2, rr.y); return; }
+    if (r.kind === 'timer') { if (r.stop) nx.stopTimer(); else nx.startTimer(r.ms); closeBar({ launched: true }); return; }
     tb.open(r); closeBar({ launched: true });
   }
 
@@ -766,7 +756,7 @@
   }
   if (navigator.getBattery) {
     navigator.getBattery().then((b) => {
-      const upd = () => { batt.level = b.level; batt.charging = b.charging; batt.remaining = b.dischargingTime; renderBatt(); };
+      const upd = () => { batt.level = b.level; batt.charging = b.charging; batt.remaining = b.dischargingTime; renderBatt(); nx.battery(batt); };
       ['levelchange', 'chargingchange', 'dischargingtimechange'].forEach((ev) => b.addEventListener(ev, upd));
       upd();
     }).catch(renderBatt);
@@ -784,9 +774,9 @@
     });
   }
   function setP(r) { r.style.setProperty('--p', ((r.value - r.min) / (r.max - r.min) * 100) + '%'); }
-  tb.on('volume', (level, muted) => { vol = { level, muted }; renderVol(); });
-  tb.on('media', (m) => setMedia(m));
-  tb.on('level', (v) => setLevel(v));
+  tb.on('volume', (level, muted) => { vol = { level, muted }; renderVol(); nx.volumeChanged(level, muted); });
+  tb.on('media', (m) => nx.setMedia(m));
+  tb.on('spectrum', (b) => nx.setSpectrum(b));
 
   const wifi = { present: true, connected: false, ssid: '', signal: 0 };
   async function refreshWifi() {
@@ -1148,48 +1138,97 @@
 
   // ---------------------------------------------------------------- settings panel
   const SWATCHES = ['cloud', '#4cc2ff', '#7c8cff', '#a78bfa', '#34d399', '#fb7185'];
+  // Settings are grouped into four tabs. A row with `show` only appears when the setting it depends on is on,
+  // so each tab stays short; `hint` is the quiet second line under a label.
+  const TABS = [['general', 'General'], ['bar', 'Bar'], ['music', 'Music'], ['extras', 'Extras']];
+  const pct = (v) => v + '%';
   const SCHEMA = [
-    { title: 'Appearance', rows: [
+    { tab: 'general', title: 'Appearance', rows: [
       { k: 'theme', label: 'Theme', t: 'seg', opts: [['auto', 'Auto'], ['dark', 'Dark'], ['light', 'Light']] },
       { k: 'accent', label: 'Accent colour', t: 'accent' },
-      { k: 'glass', label: 'Glass', t: 'range', min: 15, max: 95, step: 1, fmt: (v) => v + '%' },
+      { k: 'glass', label: 'Glass', t: 'range', min: 15, max: 95, step: 1, fmt: pct },
       { k: 'iconSize', label: 'Icon size', t: 'seg', opts: [[40, 'Small'], [46, 'Medium'], [54, 'Large']] },
       { k: 'magnify', label: 'Magnification', t: 'range', min: 1, max: 1.9, step: 0.02, fmt: (v) => (v <= 1.01 ? 'Off' : Math.round((v - 1) * 100) + '%') },
     ] },
-    { title: 'Behaviour', rows: [
-      { k: 'edgeOpen', label: 'Open when the cursor touches the edge', t: 'switch' },
-      { k: 'edge', label: 'Edge sensitivity', t: 'seg', opts: [['low', 'Low'], ['med', 'Medium'], ['high', 'High']] },
+    { tab: 'general', title: 'Opening and closing', rows: [
+      { k: 'edgeOpen', label: 'Open when the cursor touches the bar', t: 'switch' },
+      { k: 'edge', label: 'Edge sensitivity', t: 'seg', opts: [['low', 'Low'], ['med', 'Medium'], ['high', 'High']], show: (c) => c.edgeOpen },
       { k: 'delay', label: 'Open delay', t: 'range', min: 0, max: 400, step: 5, fmt: (v) => v + ' ms' },
       { k: 'closeDelay', label: 'Close delay', t: 'range', min: 0, max: 1500, step: 5, fmt: (v) => (v === 0 ? 'Instant' : v + ' ms') },
       { k: 'closeAppDelay', label: 'Close delay after closing an app', t: 'range', min: 0, max: 3000, step: 50, fmt: (v) => (v === 0 ? 'Instant' : v + ' ms') },
-      { k: 'keepOpen', label: 'Always show the dock', t: 'switch' },
       { k: 'winKey', label: 'Windows key', t: 'seg', opts: [['wispy', 'Open wispy'], ['start', 'Start menu']] },
       { k: 'monitor', label: 'Show on', t: 'monitor' },
     ] },
-    { title: 'Clock and buttons', rows: [
+    { tab: 'general', title: 'Clock and buttons', rows: [
       { k: 'clock24', label: '24-hour clock', t: 'switch' },
       { k: 'seconds', label: 'Show seconds', t: 'switch' },
       { k: 'dateFmt', label: 'Date', t: 'seg', opts: [['short', 'Short'], ['long', 'Long'], ['off', 'Hidden']] },
       { k: 'showTaskView', label: 'Task view button', t: 'switch' },
       { k: 'showDesktop', label: 'Show desktop button', t: 'switch' },
       { k: 'showSettingsBtn', label: 'wispy settings button', t: 'switch' },
-      { k: 'nowPlaying', label: 'Now playing above the bar', t: 'switch' },
       { k: 'showTray', label: 'Hidden icons button', t: 'switch' },
       { k: 'showLang', label: 'Input language button', t: 'switch' },
       { k: 'showBattPct', label: 'Battery percentage', t: 'switch' },
     ] },
-    { title: 'Search', rows: [
+    { tab: 'general', title: 'Search', rows: [
       { k: 'searchEngine', label: 'Web search with', t: 'seg', opts: [['google', 'Google'], ['duckduckgo', 'DuckDuckGo'], ['bing', 'Bing'], ['brave', 'Brave']] },
     ] },
-    { title: 'System', rows: [
+    { tab: 'general', title: 'System', rows: [
       { k: '__login', label: 'Launch at login', t: 'switch' },
     ] },
+
+    { tab: 'bar', title: 'When to show', rows: [
+      { k: 'barShow', label: 'Show the bar', t: 'seg', opts: [['hover', 'On hover'], ['music', 'While music plays'], ['always', 'Always']] },
+      { k: 'barRest', label: 'Opacity when resting', t: 'range', min: 10, max: 100, step: 1, fmt: pct, show: (c) => c.barShow !== 'hover', hint: 'How visible it is when the cursor is away' },
+      { k: 'barLean', label: 'Lean toward the cursor', t: 'switch' },
+      { k: 'keepOpen', label: 'Lock the dock open', t: 'switch', hint: 'Keeps the dock up all the time' },
+    ] },
+    { tab: 'bar', title: 'Look', rows: [
+      { k: 'barWidth', label: 'Width', t: 'range', min: 60, max: 360, step: 2, fmt: (v) => v + ' px' },
+      { k: 'barThick', label: 'Thickness', t: 'range', min: 3, max: 14, step: 1, fmt: (v) => v + ' px' },
+      { k: 'barOpacity', label: 'Opacity when hovered', t: 'range', min: 40, max: 100, step: 1, fmt: pct },
+      { k: 'barColor', label: 'Colour', t: 'seg', opts: [['auto', 'Auto'], ['white', 'White'], ['accent', 'Accent']] },
+    ] },
+
+    { tab: 'music', title: 'Title above the bar', rows: [
+      { k: 'nowPlaying', label: 'Show what is playing', t: 'switch', hint: 'Spotify, a YouTube tab, anything in Windows media controls' },
+      { k: 'npShow', label: 'Show it', t: 'seg', opts: [['hover', 'On hover'], ['visible', 'Whenever the bar shows']], show: (c) => c.nowPlaying },
+      { k: 'npArtist', label: 'Include the artist', t: 'switch', show: (c) => c.nowPlaying },
+      { k: 'npSize', label: 'Text size', t: 'range', min: 10, max: 17, step: 0.5, fmt: (v) => v + ' px', show: (c) => c.nowPlaying },
+      { k: 'npOpacity', label: 'Text opacity', t: 'range', min: 30, max: 100, step: 1, fmt: pct, show: (c) => c.nowPlaying },
+      { k: 'mediaCard', label: 'Card with cover and controls', t: 'switch', hint: 'Opens when you hover the title', show: (c) => c.nowPlaying },
+      { k: 'cardArt', label: 'Show the cover', t: 'switch', show: (c) => c.nowPlaying && c.mediaCard },
+    ] },
+    { tab: 'music', title: 'Equalizer', rows: [
+      { t: 'preview' },
+      { k: 'vizStyle', label: 'Style', t: 'seg', stack: true, opts: [['wave', 'Wave'], ['bars', 'Bars'], ['mirror', 'Mirror'], ['dots', 'Dots'], ['pulse', 'Pulse'], ['off', 'Off']] },
+      { k: 'vizSens', label: 'Sensitivity', t: 'range', min: 40, max: 240, step: 5, fmt: pct, show: (c) => c.vizStyle !== 'off' },
+      { k: 'vizSmooth', label: 'Smoothness', t: 'range', min: 0, max: 100, step: 1, fmt: (v) => (v < 25 ? 'Snappy' : v > 75 ? 'Silky' : 'Balanced'), show: (c) => c.vizStyle !== 'off' },
+      { k: 'vizBars', label: 'Detail', t: 'seg', opts: [[12, 'Low'], [24, 'Medium'], [32, 'High']], show: (c) => c.vizStyle === 'bars' || c.vizStyle === 'mirror' || c.vizStyle === 'dots' },
+      { k: 'vizColor', label: 'Colour', t: 'seg', opts: [['bar', 'Like the bar'], ['accent', 'Accent']], show: (c) => c.vizStyle !== 'off' && c.vizStyle !== 'pulse' },
+      { k: 'vizAny', label: 'React to any sound', t: 'switch', hint: 'Games and calls too, not only media', show: (c) => c.vizStyle !== 'off' },
+    ] },
+
+    { tab: 'extras', title: 'Live activities', rows: [
+      { k: 'actCharge', label: 'Charger plugged in or out', t: 'switch', hint: 'A short line above the bar' },
+      { k: 'actLowBatt', label: 'Low battery', t: 'switch' },
+      { k: 'actVolume', label: 'Volume changes', t: 'switch' },
+      { k: 'actTime', label: 'How long they stay', t: 'seg', opts: [[1600, 'Short'], [2600, 'Normal'], [4000, 'Long']], show: (c) => c.actCharge || c.actLowBatt || c.actVolume },
+    ] },
+    { tab: 'extras', title: 'Timer', rows: [
+      { k: 'timerOn', label: 'Timer in search', t: 'switch', hint: 'Type “timer 10m” in search; it counts down above the bar' },
+    ] },
+    { tab: 'extras', title: 'Gestures', rows: [
+      { k: 'scrollVol', label: 'Scroll over the bar for volume', t: 'switch' },
+    ] },
   ];
+  let setTab = 'general';
   let displays = [], loginState = { login: false, packaged: false };
   const fmtVal = (r) => (r.fmt ? r.fmt(cfg[r.k]) : cfg[r.k]);
   function rowHtml(r) {
     const v = r.k === '__login' ? loginState.login : cfg[r.k];
-    const head = `<div class="srow${r.t === 'range' ? ' rng' : ''}"><span class="sl">${esc(r.label)}</span>`;
+    if (r.t === 'preview') return '<div class="srow prev"><svg id="viz-preview" class="viz-prev" viewBox="0 0 248 44"><path d="M3 22H245"/></svg></div>';
+    const head = `<div class="srow${r.t === 'range' ? ' rng' : ''}${r.stack ? ' stack' : ''}"><span class="sl">${esc(r.label)}${r.hint ? `<small>${esc(r.hint)}</small>` : ''}</span>`;
     if (r.t === 'switch') return `${head}<span class="switch${v ? ' on' : ''}" data-k="${r.k}" data-t="switch" role="switch"${r.k === '__login' && !loginState.packaged ? ' style="opacity:.4"' : ''}></span></div>`;
     if (r.t === 'seg') return `${head}<div class="seg">${r.opts.map(([val, l]) => `<button class="${String(v) === String(val) ? 'on' : ''}" data-k="${r.k}" data-v="${val}" data-t="seg">${esc(l)}</button>`).join('')}</div></div>`;
     if (r.t === 'range') return `${head}<input type="range" min="${r.min}" max="${r.max}" step="${r.step}" value="${v}" data-k="${r.k}" data-t="range"><span class="sv">${esc(fmtVal(r))}</span></div>`;
@@ -1203,9 +1242,14 @@
   }
   function renderSettings() {
     const body = $('#set-body');
-    const keep = body.scrollTop;
-    body.innerHTML = SCHEMA.map((sec) => `<div class="group-label">${esc(sec.title)}</div><div class="group">${sec.rows.map(rowHtml).join('')}</div>`).join('') +
-      '<div class="sbtns"><button class="pill-btn" data-s="reset">Restore defaults</button><button class="pill-btn warn" data-s="quit">Quit and restore taskbar</button></div>';
+    const keep = body.dataset.tab === setTab ? body.scrollTop : 0;
+    body.dataset.tab = setTab;
+    $('#set-tabs').innerHTML = TABS.map(([id, l]) => `<button role="tab" class="${id === setTab ? 'on' : ''}" data-tab="${id}" aria-selected="${id === setTab}">${l}</button>`).join('');
+    body.innerHTML = SCHEMA.filter((sec) => sec.tab === setTab).map((sec) => {
+      const rows = sec.rows.filter((r) => !r.show || r.show(cfg));
+      return `<div class="group-label">${esc(sec.title)}</div><div class="group">${rows.map(rowHtml).join('')}</div>`;
+    }).join('') +
+      (setTab === 'general' ? '<div class="sbtns"><button class="pill-btn" data-s="reset">Restore defaults</button><button class="pill-btn warn" data-s="quit">Quit and restore taskbar</button></div>' : '');
     body.scrollTop = keep;
     body.querySelectorAll('input[type=range]').forEach(setP);
   }
@@ -1217,6 +1261,10 @@
     if (S.mode === 'settings') renderSettings();
   }
   const castVal = (k, v) => (typeof cfg[k] === 'number' ? Number(v) : v);
+  $('#set-tabs').addEventListener('click', (e) => {
+    const tabBtn = e.target.closest('[data-tab]');
+    if (tabBtn) { setTab = tabBtn.dataset.tab; renderSettings(); }
+  });
   $('#set-body').addEventListener('click', (e) => {
     const sb = e.target.closest('[data-s]');
     if (sb) {
@@ -1612,8 +1660,9 @@
   tb.init().then((i) => {
     if (i.accent) sysAccent = i.accent;
     if (i.config) applyConfig(i.config); else applyConfig({});
-    if (i.volume) { vol = i.volume; renderVol(); }
-  if (i.media) setMedia(i.media);
+    if (i.volume) { vol = i.volume; renderVol(); nx.volumeChanged(i.volume.level, i.volume.muted); }
+    if (i.media) nx.setMedia(i.media);
+    nx.applyConfig();
     setDock(i.dock || []);
     if (i.lang) { langInfo = i.lang; renderLangBtn(); }
     if (i.tray) trayList = i.tray;
@@ -1628,5 +1677,5 @@
     } catch (e) { /* storage unavailable */ }
   });
   let simT = 0;
-  window.__wispy = { S, sp, openBar, closeBar, setMode, advance(ms) { for (let left = ms; left > 0.01; left -= 16) { const d = Math.min(16, left); simT += d; update(d / 1000, performance.now() + simT); } } };
+  window.__wispy = { S, sp, nx, cfg, setCfg, openBar, closeBar, setMode, advance(ms) { for (let left = ms; left > 0.01; left -= 16) { const d = Math.min(16, left); simT += d; update(d / 1000, performance.now() + simT); } } };
 })();

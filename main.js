@@ -64,6 +64,11 @@ const DEFAULTS = {
   edgeOpen: true, edge: 'med', delay: 35, closeDelay: 35, closeAppDelay: 500, keepOpen: false, winKey: 'wispy', monitor: 'primary',
   clock24: false, seconds: false, dateFmt: 'short',
   showTray: true, showLang: true, showBattPct: true, showTaskView: true, showDesktop: false, showSettingsBtn: true, nowPlaying: true,
+  barShow: 'hover', barRest: 40, barOpacity: 100, barWidth: 132, barThick: 5, barColor: 'auto', barLean: true,
+  npShow: 'hover', npArtist: true, npSize: 12, npOpacity: 90,
+  vizStyle: 'wave', vizSens: 100, vizSmooth: 50, vizBars: 24, vizColor: 'bar', vizAny: false,
+  mediaCard: true, cardArt: true,
+  actCharge: true, actLowBatt: true, actVolume: true, actTime: 2600, timerOn: true, scrollVol: false,
   dnd: false, searchEngine: 'google', v: 3,
 };
 const ENGINES = {
@@ -155,6 +160,7 @@ function onHelper(m) {
       send({ cmd: 'hideTaskbar' });
       send({ cmd: 'bannersOff' });
       send({ cmd: 'winHijack', on: cfg.winKey === 'wispy' });
+      if (vizWanted) send({ cmd: 'viz', on: true });      // the helper restarted while the equalizer was running
       break;
     case 'lang': lastLang = m; toRenderer('lang', m); break;
     case 'tray':
@@ -174,8 +180,11 @@ function onHelper(m) {
       toRenderer('mouse', m.t || 0);
       break;
     }
-    case 'media': lastMedia = { playing: !!m.playing, title: m.title || '', artist: m.artist || '', app: m.app || '' }; toRenderer('media', lastMedia); break;
-    case 'level': toRenderer('level', m.v); break;
+    case 'media':
+      lastMedia = { playing: !!m.playing, title: m.title || '', artist: m.artist || '', app: m.app || '', art: m.art ? 'file:///' + m.art.replace(/\\/g, '/') + '?' + (m.at | 0) : '', pos: m.pos || 0, dur: m.dur || 0, at: m.at || Date.now(), canNext: !!m.canNext, canPrev: !!m.canPrev, canSeek: !!m.canSeek };
+      toRenderer('media', lastMedia);
+      break;
+    case 'spectrum': toRenderer('spectrum', m.b); break;
     case 'volume': lastVolume = { level: m.level, muted: m.muted }; toRenderer('volume', m.level, m.muted); break;
     case 'windows':
       runWin = (m.list || []).map((w) => (/[\u200b-\u200f\u2060\ufeff]/.test(w.title) ? { ...w, title: w.title.replace(/[\u200b-\u200f\u2060\ufeff]/g, '') } : w));   // some games pad their title with zero-width spaces
@@ -1063,6 +1072,9 @@ async function pumpBrightness() {
 }
 ipcMain.on('set-brightness', (_e, v) => { brightNext = Math.round(v); pumpBrightness(); });
 ipcMain.on('volume', (_e, o) => send({ cmd: 'volume', ...o }));
+let vizWanted = false;
+ipcMain.on('viz', (_e, on) => { vizWanted = !!on; send({ cmd: 'viz', on: vizWanted }); });
+ipcMain.on('media-cmd', (_e, action, pos) => send({ cmd: 'mediaCmd', action: String(action), pos: Number(pos) || 0 }));
 ipcMain.on('open-settings', (_e, uri) => shell.openExternal(uri));
 
 // power menu. WISPY_DRYRUN=1 only logs, so this can be tested without turning the PC off

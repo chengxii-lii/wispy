@@ -24,7 +24,7 @@
     barOpen: () => {}, power: (a) => console.log('power', a), shellKey: (k) => console.log('key', k),
     pinOrder: (ids) => console.log('pinOrder', ids.join(',')), windowFocus: (h) => console.log('focus', h), windowClose: (h) => console.log('close', h),
     init: async () => ({
-      accent: '#4cc2ff', dock, volume: { level: 38, muted: false }, media: { playing: true, title: 'Kyoto Sunrise', artist: 'Lofi Girl', app: 'mock' }, config: cfgStore,
+      accent: '#4cc2ff', dock, volume: { level: 38, muted: false }, media: { playing: true, title: 'Kyoto Sunrise', artist: 'Lofi Girl', app: 'mock', art: '', pos: 30, dur: 200, at: Date.now(), canNext: true, canPrev: true, canSeek: true }, config: cfgStore,
       lang: { cur: 'ENG', list: [{ key: 'en', short: 'ENG', name: 'English (United States)', sub: 'US keyboard', cur: true }, { key: 'zh', short: 'ZHO', name: 'Chinese (Simplified, PRC)', sub: 'Microsoft Pinyin', cur: false }] },
       tray: ['#7c5cff', '#2db55d', '#e8a33d', '#3b82f6', '#ef4444', '#14b8a6', '#a855f7'].map((c, i) => ({ key: 'k' + i, tip: 'Tray app ' + (i + 1), icon: icon(c, String.fromCharCode(65 + i)) })),
       history: [
@@ -50,6 +50,8 @@
     open: (r) => console.log('open', r),
     icon: async () => null,
     volume: (o) => console.log('volume', o),
+    viz: () => {},
+    mediaCmd: () => {},
     wifi: async () => ({ present: true, connected: true, ssid: 'eduroam', signal: 80 }),
     wifiNetworks: async () => [
       { ssid: 'eduroam', secured: true, enterprise: true, auth: 'WPA2-Enterprise', signal: 88, known: true, connected: true },

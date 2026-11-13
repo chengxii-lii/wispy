@@ -76,15 +76,48 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: def
 .bar-fade { position: absolute; inset: 0; border-radius: inherit; transition: opacity .18s ease, transform .22s var(--ease); }
 .mode-panel .bar-fade { opacity: 0; transform: translateY(10px) scale(.985); }
 .bar-pill, .bar-body { position: absolute; inset: 0; border-radius: inherit; }
-.bar-pill { background: var(--pill); box-shadow: 0 0 0 1px var(--pill-ring), 0 2px 10px rgba(0, 0, 0, .35); }
+.bar-pill { background: var(--pill-c, var(--pill)); box-shadow: 0 0 0 1px var(--pill-ring), 0 2px 10px rgba(0, 0, 0, .35), 0 0 calc(var(--lv, 0) * 18px) calc(var(--lv, 0) * 2px) rgba(255, 255, 255, calc(var(--lv, 0) * .5)); }
 /* while sound plays the bar turns into a wiggling line of the same size (see update() in app.js) */
-.bar-wave { position: absolute; left: 0; top: 50%; width: 100%; height: 24px; margin-top: -12px; overflow: visible; opacity: 0; pointer-events: none; filter: drop-shadow(0 1px 3px rgba(0, 0, 0, .4)); }
-.bar-wave path { fill: none; stroke: var(--pill); stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
+.bar-wave { position: absolute; left: 0; top: 50%; width: 100%; height: 44px; margin-top: -22px; overflow: visible; opacity: 0; pointer-events: none; filter: drop-shadow(0 1px 3px rgba(0, 0, 0, .4)); }
+.bar-wave path { fill: none; stroke: var(--viz-c, var(--pill-c, var(--pill))); stroke-width: var(--sw, 5px); stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.bar-wave.acc { --viz-c: var(--accent); }
 
 /* now playing: one line of small text above the bar, only while something plays */
-#np { position: absolute; left: 50%; bottom: 0; width: max-content; max-width: min(440px, 82vw); pointer-events: none; opacity: 0; visibility: hidden; will-change: transform, opacity; }
-#np .np-t { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: center; font-size: 11.5px; font-weight: 500; letter-spacing: .01em; color: #fff; text-shadow: 0 1px 3px rgba(0, 0, 0, .55), 0 0 12px rgba(0, 0, 0, .25); transition: opacity .22s ease, transform .22s var(--ease); }
+#np { position: absolute; left: 50%; bottom: 0; width: max-content; max-width: min(440px, 82vw); display: flex; align-items: center; justify-content: center; gap: 6px; padding: 3px 6px; pointer-events: none; opacity: 0; visibility: hidden; will-change: transform, opacity; color: #fff; font-size: var(--np-size, 12px); font-weight: 500; letter-spacing: .01em; text-shadow: 0 1px 3px rgba(0, 0, 0, .55), 0 0 12px rgba(0, 0, 0, .25); }
+#np .np-t { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; transition: opacity .22s ease, transform .22s var(--ease); }
 #np .np-t.swap { opacity: 0; transform: translateY(3px); }
+#np .np-ico { width: 1.15em; height: 1.15em; flex: none; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .5)); }
+#np .np-chip { flex: none; padding: 0 7px; line-height: 1.55; border-radius: 99px; background: rgba(255, 255, 255, .2); font-variant-numeric: tabular-nums; font-size: .92em; }
+#np .np-meter { flex: none; width: 54px; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, .28); overflow: hidden; }
+#np .np-meter i { display: block; height: 100%; border-radius: inherit; background: #fff; }
+
+/* the card that opens when you hover the line */
+#npcard { position: absolute; left: 50%; bottom: 0; width: 332px; display: flex; gap: 12px; padding: 12px 14px 12px 12px; margin-bottom: -2px; border-radius: 20px; background: var(--surface); box-shadow: 0 0 0 1px var(--line), var(--shadow); opacity: 0; visibility: hidden; pointer-events: none; will-change: transform, opacity; }
+#npcard::after { content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 14px; }   /* bridges the gap to the line, so the pointer can travel up */
+.nc-art { width: 76px; height: 76px; flex: none; border-radius: 13px; overflow: hidden; background: var(--raised-2); display: grid; place-items: center; color: var(--faint); position: relative; }
+.nc-art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.nc-art .ic { width: 28px; height: 28px; }
+#npcard:not(.noart) .nc-art .ic { display: none; }
+#npcard.noart .nc-art img { display: none; }
+.nc-main { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: space-between; }
+.nc-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.nc-title { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nc-artist { font-style: normal; font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nc-prog { display: flex; align-items: center; gap: 7px; font-size: 10.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.nc-prog span { width: 28px; flex: none; }
+.nc-prog .nc-t1 { text-align: right; }
+.nc-bar { flex: 1; height: 4px; border-radius: 2px; background: var(--raised-2); position: relative; }
+.nc-bar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: inherit; background: var(--text); }
+.nc-bar.seek { cursor: pointer; }
+.nc-bar.seek::before { content: ""; position: absolute; inset: -8px 0; }
+#npcard.live .nc-bar i { width: 100% !important; opacity: .25; }
+.nc-ctl { display: flex; align-items: center; justify-content: center; gap: 6px; }
+.nc-ctl button { width: 34px; height: 30px; border-radius: 10px; display: grid; place-items: center; color: var(--text); transition: background .15s, transform .1s, opacity .15s; }
+.nc-ctl button:hover { background: var(--raised); }
+.nc-ctl button:active { transform: scale(.92); }
+.nc-ctl button:disabled { opacity: .3; pointer-events: none; }
+.nc-ctl button.main { width: 40px; background: var(--raised-2); }
+.nc-ctl .ic { width: 16px; height: 16px; fill: currentColor; stroke-width: 1.6; }
 .bar-body { background: var(--surface); box-shadow: 0 0 0 1px var(--line), var(--shadow); }
 
 #items { position: absolute; left: 0; right: 0; bottom: 0; height: 100%; display: flex; align-items: flex-end; justify-content: center; padding: 0 var(--pad, 9px) var(--pad, 9px); gap: var(--gap, 6px); }
@@ -524,7 +557,19 @@ button[disabled], .pill-btn[disabled], .qs.busy button { cursor: default; }
 #p-settings { width: 420px; max-height: 640px; margin-left: var(--panel-shift, 0px); display: flex; flex-direction: column; }
 #p-settings .page-head { padding: 14px 16px 4px; margin: 0; }
 #p-settings .ver { font-size: 11.5px; color: var(--faint); }
-#set-body { overflow: auto; padding: 0 12px 12px; max-height: 560px; }
+#set-body { overflow: auto; padding: 0 12px 12px; height: 500px; max-height: 60vh; }
+.set-tabs { display: flex; gap: 2px; margin: 6px 12px 4px; padding: 3px; border-radius: 12px; background: var(--raised); flex: none; }
+.set-tabs button { flex: 1; height: 28px; border-radius: 9px; font-size: 12.5px; color: var(--muted); transition: background .15s, color .15s; }
+.set-tabs button:hover { color: var(--text); }
+.set-tabs button.on { background: var(--accent); color: var(--accent-ink); font-weight: 500; }
+.srow.stack { flex-wrap: wrap; row-gap: 6px; }
+.srow.stack .seg { width: 100%; max-width: none; }
+.srow.stack .seg button { flex: 1; padding: 0 6px; }
+.srow.prev { min-height: 64px; justify-content: center; }
+.viz-prev { width: 248px; height: 44px; overflow: visible; filter: drop-shadow(0 1px 3px rgba(0, 0, 0, .35)); }
+.viz-prev path { fill: none; stroke: var(--viz-c, var(--pill-c, var(--text))); stroke-width: var(--sw, 5px); stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.viz-prev.acc { --viz-c: var(--accent); }
+.srow .sl small { display: block; margin-top: 2px; font-size: 11px; line-height: 1.35; color: var(--faint); }
 #set-body::-webkit-scrollbar { width: 6px; }
 #set-body::-webkit-scrollbar-thumb { background: var(--raised-2); border-radius: 3px; }
 .srow { display: flex; align-items: center; gap: 12px; min-height: 46px; padding: 8px 12px; }
