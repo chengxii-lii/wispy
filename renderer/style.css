@@ -76,7 +76,10 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: def
 .bar-fade { position: absolute; inset: 0; border-radius: inherit; transition: opacity .18s ease, transform .22s var(--ease); }
 .mode-panel .bar-fade { opacity: 0; transform: translateY(10px) scale(.985); }
 .bar-pill, .bar-body { position: absolute; inset: 0; border-radius: inherit; }
-.bar-pill { background: var(--pill); box-shadow: 0 0 0 1px var(--pill-ring), 0 2px 10px rgba(0, 0, 0, .35), 0 0 calc(var(--lv, 0) * 18px) calc(var(--lv, 0) * 2px) rgba(255, 255, 255, calc(var(--lv, 0) * .5)); }
+.bar-pill { background: var(--pill); box-shadow: 0 0 0 1px var(--pill-ring), 0 2px 10px rgba(0, 0, 0, .35); }
+/* while sound plays the bar turns into a wiggling line of the same size (see update() in app.js) */
+.bar-wave { position: absolute; left: 0; top: 50%; width: 100%; height: 24px; margin-top: -12px; overflow: visible; opacity: 0; pointer-events: none; filter: drop-shadow(0 1px 3px rgba(0, 0, 0, .4)); }
+.bar-wave path { fill: none; stroke: var(--pill); stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
 
 /* now playing: one line of small text above the bar, only while something plays */
 #np { position: absolute; left: 50%; bottom: 0; width: max-content; max-width: min(440px, 82vw); pointer-events: none; opacity: 0; visibility: hidden; will-change: transform, opacity; }

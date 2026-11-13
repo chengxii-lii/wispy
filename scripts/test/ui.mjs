@@ -222,47 +222,63 @@ await group('dock: an app closing', async (p) => {
 });
 
 // ---------------------------------------------------------------- now playing
-await group('now playing: one line above the bar, and the bar follows the sound', async (p) => {
+await group('now playing: title above the bar on hover, and the bar wiggles with the sound', async (p) => {
   const np = () => p.eval(`(() => { const e = document.querySelector('#np'); return { o: +e.style.opacity, v: e.style.visibility, t: e.textContent }; })()`);
-  await sleep(900);
+  const wave = () => p.eval(`(() => ({ o: +document.querySelector('.bar-wave').style.opacity, po: +document.querySelector('.bar-pill').style.opacity, d: document.querySelector('.bar-wave path').getAttribute('d') }))()`);
+  await sleep(700);
   let n = await np();
-  check('the title shows while something plays', n.o > .95 && n.v === 'visible' && n.t.includes('Kyoto Sunrise'), JSON.stringify(n));
+  check('nothing shows while the pointer is away', n.o < .02 && await p.eval(`document.querySelector('#bar').style.visibility === 'hidden'`), JSON.stringify(n));
+  await move(p, 460, 600); await sleep(900);   // the usual hover state: the bar has peeked out, the dock is closed
+  n = await np();
+  check('hovering shows the title', n.o > .9 && n.v === 'visible' && n.t.includes('Kyoto Sunrise'), JSON.stringify(n));
   check('...with the artist', n.t.includes('Lofi Girl'));
   const bar0 = await rect(p, '#bar'), np0 = await rect(p, '#np');
-  check('the bar rests faintly in view', await p.eval(`+document.querySelector('#bar').style.opacity > .6`));
+  check('the dock stays closed', !(await S(p, 'open')));
   check('the text sits above the bar', np0.y + np0.h <= bar0.y + .5, `text bottom ${np0.y + np0.h}, bar top ${bar0.y}`);
   check('the text is centred over the bar', Math.abs((np0.x + np0.w / 2) - (bar0.x + bar0.w / 2)) < 2);
-  for (let i = 0; i < 12; i++) { await p.eval(`window.tbMock.emit('level', 0.9)`); await sleep(33); }
-  const loud = await rect(p, '#bar');
-  check('loud sound makes the bar thicker and wider', loud.h > bar0.h + 2 && loud.w > bar0.w + 4, `${bar0.w}x${bar0.h} -> ${loud.w}x${loud.h}`);
-  check('...and makes it glow', await p.eval(`+document.querySelector('.bar-pill').style.getPropertyValue('--lv') > .5`));
-  await p.eval(`window.tbMock.emit('level', 0)`); await sleep(800);
-  const quiet = await rect(p, '#bar');
-  check('silence brings it back', Math.abs(quiet.h - bar0.h) < .6 && Math.abs(quiet.w - bar0.w) < 1, `${quiet.w}x${quiet.h}`);
-  await p.eval(`window.tbMock.emit('media', { playing: true, title: 'Second Song', artist: 'Someone', app: 'x' })`); await sleep(600);
-  n = await np();
-  check('a new track swaps the text', n.t.includes('Second Song') && n.o > .95, n.t);
-  await p.eval(`window.tbMock.emit('media', { playing: true, title: 'Only a title', artist: '', app: 'x' })`); await sleep(600);
-  n = await np();
-  check('a title with no artist shows just the title', n.t === 'Only a title', n.t);
+  let w = await wave();
+  check('quiet: a plain bar', w.po > .9 && w.o < .02, JSON.stringify({ po: w.po, o: w.o }));
+  const shapes = new Set();
+  for (let i = 0; i < 14; i++) { await p.eval(`window.tbMock.emit('level', ${i % 2 ? 0.9 : 0.7})`); await sleep(40); shapes.add((await wave()).d); }
+  w = await wave();
+  check('loud: the bar becomes a wiggling line', w.o > .9 && w.po < .1, JSON.stringify({ po: w.po, o: w.o }));
+  check('...that keeps moving', shapes.size >= 8, shapes.size + ' different shapes');
+  const ys = [...w.d.matchAll(/ ([\d.]+)/g)].map((m) => +m[1]);
+  check('...with real height', Math.max(...ys) - Math.min(...ys) > 4, (Math.max(...ys) - Math.min(...ys)).toFixed(1) + 'px');
+  check('the bar itself keeps its size', Math.abs((await rect(p, '#bar')).h - bar0.h) < .1 && Math.abs((await rect(p, '#bar')).w - bar0.w) < .1);
+  await p.eval(`window.tbMock.emit('level', 0)`); await sleep(900);
+  w = await wave();
+  check('silence brings the plain bar back', w.po > .9 && w.o < .02, JSON.stringify({ po: w.po, o: w.o }));
   check('no errors', p.errors.length === 0, p.errors.join(' | '));
 });
 // (headless Chrome reloads a page about 5 s after it opens, so each group here stays under that)
-await group('now playing: dock, pause and the setting', async (p) => {
+await group('now playing: tracks, dock, pause and the setting', async (p) => {
   const np = () => p.eval(`(() => { const e = document.querySelector('#np'); return { o: +e.style.opacity, v: e.style.visibility, t: e.textContent }; })()`);
-  await sleep(700);
-  let n;
+  await sleep(400);
+  await move(p, 460, 600); await sleep(600);
+  await p.eval(`window.tbMock.emit('media', { playing: true, title: 'Second Song', artist: 'Someone', app: 'x' })`); await sleep(500);
+  let n = await np();
+  check('a new track swaps the text', n.t.includes('Second Song') && n.o > .9, n.t);
+  await p.eval(`window.tbMock.emit('media', { playing: true, title: 'Only a title', artist: '', app: 'x' })`); await sleep(500);
+  n = await np();
+  check('a title with no artist shows just the title', n.t === 'Only a title', n.t);
   await edge(p);
   n = await np();
   check('the text steps aside while the dock is open', n.o < .05, 'opacity ' + n.o);
-  await away(p); await sleep(300);
-  await p.eval(`window.tbMock.emit('media', { playing: false, title: 'Only a title', artist: '', app: 'x' })`); await sleep(1500);
+  check('no errors', p.errors.length === 0, p.errors.join(' | '));
+});
+await group('now playing: pause and the setting', async (p) => {
+  const np = () => p.eval(`(() => { const e = document.querySelector('#np'); return { o: +e.style.opacity, v: e.style.visibility, t: e.textContent }; })()`);
+  let n;
+  await sleep(400);
+  await move(p, 460, 600); await sleep(700);
+  await p.eval(`window.tbMock.emit('media', { playing: false, title: 'Only a title', artist: '', app: 'x' })`); await sleep(700);
   n = await np();
-  check('paused: the text and the resting bar go away', n.o < .02 && await p.eval(`document.querySelector('#bar').style.visibility === 'hidden'`), JSON.stringify(n));
-  await p.eval(`window.tbMock.emit('media', { playing: true, title: 'Back again', artist: 'X', app: 'x' })`); await sleep(800);
+  check('paused: the text goes away even on hover', n.o < .02, JSON.stringify(n));
+  await p.eval(`window.tbMock.emit('media', { playing: true, title: 'Back again', artist: 'X', app: 'x' })`); await sleep(500);
   n = await np();
-  check('playing again brings it back', n.o > .95 && n.t.includes('Back again'), JSON.stringify(n));
-  await p.eval(`window.tbMock.emit('config', { nowPlaying: false })`); await sleep(800);
+  check('playing again brings it back', n.o > .9 && n.t.includes('Back again'), JSON.stringify(n));
+  await p.eval(`window.tbMock.emit('config', { nowPlaying: false })`); await sleep(500);
   n = await np();
   check('the setting turns it off', n.o < .02, 'opacity ' + n.o);
   check('no errors', p.errors.length === 0, p.errors.join(' | '));

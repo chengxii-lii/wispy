@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.13
+
+- **Now playing is calmer.** The title above the white bar only shows in the normal hover state, like the bar itself, instead of staying on screen while music plays. The bar now wiggles with the sound (a line the same size as the bar that ripples with the loudness) instead of getting thicker and glowing.
+
 ## v1.0.12
 
 - **Now playing.** While something plays (Spotify, a YouTube tab, any app that shows up in Windows' media controls), the white bar stays faintly in view with the title and artist in small text above it. The bar thickens and glows with the loudness of whatever comes out of your speakers. Turn it off in Settings → Now playing above the bar.

@@ -50,7 +50,20 @@
   // now playing: one small line above the bar, and the bar itself follows the loudness of what comes out of the speakers
   const npEl = $('#np'), npT = npEl.querySelector('.np-t');
   let np = { playing: false, text: '' }, npA = 0, npShown = '', npSwap = 0;
-  let lv = 0, lvT = 0, lvMax = .1;      // shown level, level asked for, running peak used to normalise (so it works at any volume)
+  let lv = 0, lvT = 0, lvMax = .1, wph = 0;   // shown level, level asked for, running peak used to normalise (so it works at any volume), wave phase
+  const waveEl = $('.bar-wave'), wavePath = waveEl.querySelector('path');
+  const WAVE_PTS = 33;
+  // a line the width of the bar that wiggles: two travelling sines, tapered to nothing at the ends, as tall as the sound is loud
+  function drawWave(a, ph) {
+    let d = '';
+    for (let i = 0; i < WAVE_PTS; i++) {
+      const u = i / (WAVE_PTS - 1), x = 2.5 + u * 127;
+      const env = Math.sin(Math.PI * u);
+      const y = 12 + a * env * (.62 * Math.sin(u * 17 + ph) + .38 * Math.sin(u * 29 - ph * 1.37));
+      d += (i ? 'L' : 'M') + x.toFixed(1) + ' ' + y.toFixed(2);
+    }
+    wavePath.setAttribute('d', d);
+  }
   function setMedia(m) {
     const text = m.title ? (m.artist ? m.title + ' \u00b7 ' + m.artist : m.title) : '';
     np = { playing: !!m.playing && !!text, text: text || np.text };
@@ -68,7 +81,7 @@
     lvMax = Math.max(lvMax * .997, v, .08);
     const x = Math.min(1, v / lvMax);
     lvT = x < .06 ? 0 : Math.pow(x, 1.25);
-    wake();
+    if (S.inZ1 || S.open || sp.presence.x > .02 || lv > 0) wake();     // nothing to draw while the bar is out of sight
   }
   let active = false, last = 0, gen = 0, lastFrameAt = 0;
 
@@ -402,13 +415,13 @@
 
     const open = S.open, inZ1 = S.inZ1;
     const npOn = cfg.nowPlaying !== false && np.playing && !S.fullscreen && S.mode === 'dock';
-    npA += ((npOn ? 1 : 0) - npA) * (1 - Math.exp(-dt * 5));
+    npA += ((npOn ? 1 : 0) - npA) * (1 - Math.exp(-dt * 8));
     if (Math.abs((npOn ? 1 : 0) - npA) < .004) npA = npOn ? 1 : 0;
-    const lt = npOn ? lvT : 0;
-    lv += (lt - lv) * (1 - Math.exp(-dt * (lt > lv ? 26 : 7)));
+    const lt = npOn && (inZ1 || open || sp.presence.x > .02) ? lvT : 0;
+    lv += (lt - lv) * (1 - Math.exp(-dt * (lt > lv ? 26 : 10)));
     if (lt === 0 && lv < .004) lv = 0;
-    const resting = npOn && npA === 1 && !inZ1 && !open;      // the bar stays faintly there while music plays
-    sp.presence.step(inZ1 || open ? 1 : npA * .72, dt);
+    wph += dt * (5 + lv * 9);
+    sp.presence.step(inZ1 || open ? 1 : 0, dt);
     sp.lift.step(open ? 0 : LIFT * Math.pow(S.s, .8), dt);
     sp.tx.step(inZ1 && !open ? clamp((S.cx - innerWidth / 2) * .1, -24, 24) : 0, dt);
     sp.open.step(open ? 1 : 0, dt);
@@ -420,9 +433,9 @@
 
     const o = sp.open.x, e = clamp(o, 0, 1.02);
     const dockW = layoutDockW(true);
-    const w = lerp(PILL_W * (1 + lv * .12), dockW, e), h = lerp(PILL_H + lv * 4, DOCK_H, e);
+    const w = lerp(PILL_W, dockW, e), h = lerp(PILL_H, DOCK_H, e);
     const y = lerp(PILL_BOTTOM + sp.lift.x, DOCK_BOTTOM, e);
-    const rad = lerp((PILL_H + lv * 4) / 2, DOCK_H / 2, smooth(0, .5, o));
+    const rad = lerp(PILL_H / 2, DOCK_H / 2, smooth(0, .5, o));
     const vis = sp.presence.x > .01 || o > .01;
     bar.style.visibility = vis ? 'visible' : 'hidden';
     bar.style.opacity = clamp(sp.presence.x, 0, 1).toFixed(3);
@@ -430,9 +443,11 @@
     bar.style.height = h.toFixed(1) + 'px';
     bar.style.borderRadius = rad.toFixed(1) + 'px';
     bar.style.transform = `translate3d(${(sp.tx.x - w / 2).toFixed(1)}px, ${(-y).toFixed(1)}px, 0)`;
-    pillEl.style.opacity = (1 - smooth(0, .4, o)).toFixed(3);
-    pillEl.style.setProperty('--lv', lv.toFixed(3));
-    const npo = npA * (1 - smooth(0, .3, o));
+    const wb = smooth(0, .03, lv);     // 0 = plain bar, 1 = wiggling line
+    pillEl.style.opacity = ((1 - smooth(0, .4, o)) * (1 - wb)).toFixed(3);
+    waveEl.style.opacity = (wb * (1 - smooth(0, .4, o))).toFixed(3);
+    if (wb > 0) drawWave(lv * 7.5, wph);
+    const npo = npA * clamp(sp.presence.x, 0, 1) * (1 - smooth(0, .3, o));
     npEl.style.opacity = npo.toFixed(3);
     npEl.style.visibility = npo > .01 ? 'visible' : 'hidden';
     if (npo > .01) npEl.style.transform = `translate3d(calc(-50% + ${sp.tx.x.toFixed(1)}px), ${(-(y + h + 9)).toFixed(1)}px, 0)`;
@@ -464,8 +479,8 @@
     toastsEl.style.transform = `translate3d(-50%, ${(-lerp(30 + sp.lift.x * .6, DOCK_BOTTOM + DOCK_H + 34, e)).toFixed(1)}px, 0)`;
 
     updateInteractive();
-    if (err > .002 || open || inZ1 || lv > 0 || (lt > 0) || npA !== (npOn ? 1 : 0) || (sp.presence.x > .01 && !resting)) return true;
-    if (!resting) bar.style.visibility = 'hidden';
+    if (err > .002 || open || inZ1 || lv > 0 || lt > 0 || npA !== (npOn ? 1 : 0) || sp.presence.x > .01) return true;
+    bar.style.visibility = 'hidden';
     return false;
   }
 
