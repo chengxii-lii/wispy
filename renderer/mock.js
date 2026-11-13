@@ -35,6 +35,7 @@
     on: (ch, fn) => { (handlers[ch] = handlers[ch] || []).push(fn); },
     interactive: () => {},
     pong: () => {},
+    hitRects: () => {},
     focusMe: async () => true,
     release: () => {},
     dockClick: (id, mod) => console.log('dockClick', id, mod),

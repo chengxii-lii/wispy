@@ -57,4 +57,5 @@ contextBridge.exposeInMainWorld('tb', {
   appAction: (id, act) => send('app-action', id, act),
   resultAction: (r, act) => invoke('result-action', r, act),
   pong: () => send('pong'),
+  hitRects: (r) => send('hit-rects', r),
 });

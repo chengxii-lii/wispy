@@ -202,6 +202,11 @@ function targetDisplay() {
   return screen.getPrimaryDisplay();
 }
 ipcMain.on('bar-open', (_e, v) => { barOpen = !!v; });
+// Where the page's clickable things are (window coordinates). The page decides what is clickable, but it only learns
+// where the cursor is after we tell it, and we only learn it should be interactive after it answers: a click right as
+// the pointer arrives used to fall through to the window underneath. With the rectangles we can switch on at once.
+let hitRects = [];
+ipcMain.on('hit-rects', (_e, r) => { hitRects = Array.isArray(r) ? r.slice(0, 60) : []; });
 function wantedBounds() {
   const d = targetDisplay().bounds;
   return { x: Math.round(d.x + (d.width - W) / 2), y: d.y + d.height - H, width: W, height: H };
@@ -254,6 +259,9 @@ function pollCursor() {
   let x = p.x - b.x, y = p.y - b.y;
   const inside = x >= 0 && x < b.width && y >= 0 && y < b.height;
   if (!inside) { x = -1; y = -1; }
+  if (inside && !interactive && hitRects.some((r) => x >= r[0] && x < r[0] + r[2] && y >= r[1] && y < r[1] + r[3])) {
+    interactive = true; win.setIgnoreMouseEvents(false); toRenderer('interactive', true);
+  }
   const key = x + ',' + y;
   const near = barOpen || fullscreen === false && inside && y > b.height - 380;
   if (key === lastCursor) return near;
@@ -483,17 +491,21 @@ function launchPin(p) {
   else spawn('explorer.exe', ['shell:AppsFolder\\' + p.aumid], { detached: true, stdio: 'ignore' }).unref();
 }
 
-function iconKey(src) { return crypto.createHash('sha1').update('v3|' + src).digest('hex').slice(0, 16); }
+// v4: icons are now rendered at 256 px and packaged apps use their real tile icon; this also throws away every older
+// (smaller, sometimes wrong) icon already on disk
+function iconKey(src) { return crypto.createHash('sha1').update('v4|' + src).digest('hex').slice(0, 16); }
+const ICON_PX = 256;
+const iconFail = new Map();         // key -> when the helper last failed to make it (retry after a while, not on every poll)
 
 function iconUrl(src, key, hwnd) {
   const k = key || src;
   if (iconCache.has(k)) return iconCache.get(k);
-  if (!iconInflight.has(k)) {
+  if (!iconInflight.has(k) && !(iconFail.get(k) > Date.now() - 30000)) {
     const out = path.join(iconDir, iconKey(k) + '.png');
     const p = (async () => {
       if (!fs.existsSync(out)) {
-        const r = await request({ cmd: 'icon', path: src, size: 128, out, hwnd: hwnd || 0 });
-        if (!r || !r.ok) return null;
+        const r = await request({ cmd: 'icon', path: src, size: ICON_PX, out, hwnd: hwnd || 0 });
+        if (!r || !r.ok) { iconFail.set(k, Date.now()); return null; }
       }
       const url = 'file:///' + out.replace(/\\/g, '/') + '?v=1';
       iconCache.set(k, url);
@@ -515,7 +527,10 @@ function shortTitle(t) { const s = String(t || '').split(/ [-–—|] /).pop().t
 let dockModel = [];
 const winBrief = (wins) => (wins.length > 1 ? wins.map((w) => ({ hwnd: w.hwnd, title: w.title, min: !!w.min })) : undefined);
 // a window belongs to a pin by exe, by package, or (UWP apps inside Windows' app frame, like Settings) by AUMID
-function pinWins(p) { return runWin.filter((w) => (w.aumid && p.aumid && w.aumid === p.aumid.toLowerCase()) || pinMatches(p, w.exe) || (w.home && pinMatches(p, w.home))); }
+function pinWins(p) { return runWin.filter((w) => (w.aumid && p.aumid && w.aumid.toLowerCase() === p.aumid.toLowerCase()) || pinMatches(p, w.exe) || (w.home && pinMatches(p, w.home))); }
+// which program a not-pinned window belongs to: its package, or else its home exe, by full path (two different
+// "launcher.exe" must not merge into one icon)
+const winKey = (w) => (w.aumid ? 'aumid:' + w.aumid.toLowerCase() : String(w.home || w.exe).toLowerCase());
 
 function buildDock() {
   const claimed = new Set();
@@ -530,7 +545,7 @@ function buildDock() {
   const byExe = new Map();
   for (const w of runWin) {
     if (claimed.has(w.hwnd)) continue;
-    const b = path.basename(w.home || w.exe).toLowerCase();   // a window belongs to its home program (steamwebhelper.exe -> steam.exe)
+    const b = winKey(w);   // a window belongs to its home program (steamwebhelper.exe -> steam.exe)
     if (!byExe.has(b)) byExe.set(b, []);
     byExe.get(b).push(w);
   }
@@ -538,7 +553,7 @@ function buildDock() {
   for (const [b, wins] of byExe) {
     extra.push({
       id: 'run:' + b, name: (wins[0].name && !/^\w+\.\w+$/.test(wins[0].name) ? wins[0].name : '') || shortTitle(wins[0].title) || prettyExe(wins[0].exe), pinned: false,
-      icon: iconUrl(wins[0].home || wins[0].exe, null, wins[0].home ? 0 : wins[0].hwnd),
+      icon: wins[0].aumid && !wins[0].home ? iconUrl('shell:AppsFolder\\' + wins[0].aumid, 'aumid:' + wins[0].aumid.toLowerCase()) : iconUrl(wins[0].home || wins[0].exe, null, wins[0].home ? 0 : wins[0].hwnd),
       running: wins.length, active: wins.some((w) => w.hwnd === fgHwnd && !w.min), wins: winBrief(wins),
     });
   }
@@ -558,7 +573,7 @@ function pushDock() {
 function winsFor(id) {
   if (id.startsWith('run:')) {
     const b = id.slice(4);
-    return runWin.filter((w) => path.basename(w.home || w.exe).toLowerCase() === b);
+    return runWin.filter((w) => winKey(w) === b);
   }
   const p = pinned.find((x) => x.id === id);
   if (!p) return [];
@@ -802,7 +817,7 @@ ipcMain.handle('icon', async (_e, src, key) => {
   if (iconCache.has(k)) return iconCache.get(k);
   const out = path.join(iconDir, iconKey(k) + '.png');
   if (!fs.existsSync(out)) {
-    const r = await request({ cmd: 'icon', path: src, size: 128, out });
+    const r = await request({ cmd: 'icon', path: src, size: ICON_PX, out });
     if (!r || !r.ok) return null;
   }
   const url = 'file:///' + out.replace(/\\/g, '/') + '?v=1';
@@ -827,7 +842,7 @@ async function iconFile(src, key) {
   if (iconCache.has(k)) return iconCache.get(k);
   const out = path.join(iconDir, iconKey(k) + '.png');
   if (!fs.existsSync(out)) {
-    const r = await request({ cmd: 'icon', path: src, size: 128, out });
+    const r = await request({ cmd: 'icon', path: src, size: ICON_PX, out });
     if (!r || !r.ok) return null;
   }
   const url = 'file:///' + out.replace(/\\/g, '/') + '?v=1';

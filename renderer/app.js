@@ -16,7 +16,7 @@
   const ROW_B = 10, ROW_H = 44, DOCK_BOTTOM = ROW_B + ROW_H + 8;
   const Z1 = 150;
   let Z2 = 12;          // distance from the screen's bottom edge: peek zone, open zone
-  const ZX1 = 300, ZX2 = 210;        // how far from centre each zone reaches sideways
+  const ZX1 = 300;                   // how far from centre the pill starts to show and lean
   let DWELL = 35;
   let CLOSE_ANIM = 500; // after an app closes the dock stays up this long, so the icon's close animation plays out (the 'after an app closes' setting)
   let LEAVE = 35;      // how long the cursor must stay away before the dock closes (the 'Close delay' setting)
@@ -108,7 +108,9 @@
     // (so it doesn't pop straight back over the new window); any real movement or a moment's wait brings it back
     if (S.suppress && (!S.inside || now - S.supAt > 500 || Math.hypot(S.cx - S.supX, S.cy - S.supY) > 12)) S.suppress = false;
     const inZ1 = !S.fullscreen && d < Z1 && dx < ZX1;
-    const inZ2 = !S.fullscreen && !S.suppress && cfg.edgeOpen && d <= Z2 && dx < Math.max(ZX2, barHalfWidth());
+    // the dock opens only over the white bar itself (which leans toward the cursor), not along the whole taskbar
+    const pillDx = S.inside ? Math.abs(S.cx - (W / 2 + sp.tx.x)) : 1e4;
+    const inZ2 = !S.fullscreen && !S.suppress && cfg.edgeOpen && d <= Z2 && pillDx < PILL_W / 2 + 6;
 
     // magnet strength: grows as the cursor nears the edge, fades sideways
     const s = smooth(Z1, Z2, d) * smooth(ZX1, 150, dx);
@@ -184,18 +186,18 @@
         const el = document.createElement('button');
         el.className = 'item'; el.dataset.id = d.id;
         el.innerHTML = '<span class="ph"></span><span class="tip"></span><span class="dot"></span>';
-        el.addEventListener('click', (e) => {
-          if (it.suppressClick) { it.suppressClick = false; return; }
+        const activate = (shift) => {
           const cur = it.data || d;
           pulse(it);
-          if (cur.running > 1 && cur.wins && !e.shiftKey) { openPicker(it, cur); return; }
+          if (cur.running > 1 && cur.wins && !shift) { openPicker(it, cur); return; }
           if (!(cur.running > 0)) markLaunching(it);
-          tb.dockClick(d.id, e.shiftKey ? 'new' : ''); afterAction();
-        });
-        el.addEventListener('pointerdown', (e) => { el.classList.add('down'); beginDrag(it, e); });
+          tb.dockClick(d.id, shift ? 'new' : ''); afterAction();
+        };
+        el.addEventListener('click', (e) => { if (e.detail === 0) activate(e.shiftKey); });   // Enter / Space; the mouse is handled on pointer-up below
+        el.addEventListener('pointerdown', (e) => { if (e.button === 0) press = { it, x: e.clientX, y: e.clientY, t: Date.now(), shift: e.shiftKey }; el.classList.add('down'); beginDrag(it, e); });
         for (const t of ['pointerup', 'pointercancel', 'pointerleave']) el.addEventListener(t, () => el.classList.remove('down'));
         el.addEventListener('auxclick', (e) => { if (e.button === 1) { tb.dockClick(d.id, 'new'); afterAction(); } });
-        it = { id: d.id, el, scale: new Spring(1, 7, .82), intro: 0, icon: null, pinned: d.pinned, dx: 0 };
+        it = { id: d.id, el, scale: new Spring(1, 7, .82), intro: 0, icon: null, pinned: d.pinned, dx: 0, activate };
         it.tip = el.querySelector('.tip');
         items.set(d.id, it);
         itemsEl.appendChild(el);
@@ -280,7 +282,7 @@
   }
 
   // drag a pinned app sideways to reorder it; the new arrangement is saved by main
-  let drag = null, pendingDock = null;
+  let drag = null, pendingDock = null, press = null;
   function restCenters() {
     let x = innerWidth / 2 - layoutDockW(false) / 2 + PAD;
     const cs = [];
@@ -294,7 +296,7 @@
   document.addEventListener('pointermove', (e) => {
     if (!drag) return;
     if (!drag.moved) {
-      if (Math.abs(e.clientX - drag.x0) + Math.abs(e.clientY - drag.y0) < 8) return;
+      if (Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) < 10) return;   // a click with a little wobble is still a click
       drag.moved = true; S.dragItem = drag.it; S.dragging = true;
       drag.it.el.classList.add('dragging'); drag.it.dsp = null;
       try { drag.it.el.setPointerCapture(drag.id); } catch (err) { /* ignore */ }
@@ -321,6 +323,14 @@
     if (pendingDock) { const l = pendingDock; pendingDock = null; setDock(l); }
     wake();
   }
+  document.addEventListener('pointerup', (e) => {
+    const p = press; press = null;
+    if (!p || e.button !== 0 || Date.now() - p.t > 2000) return;
+    if (p.it.suppressClick) { p.it.suppressClick = false; return; }          // that was a reorder
+    if (drag && drag.moved) return;
+    if (Math.hypot(e.clientX - p.x, e.clientY - p.y) > 10) return;          // pressed on an icon, released somewhere else
+    p.it.activate(p.shift);
+  });
   document.addEventListener('pointerup', endDrag);
   document.addEventListener('pointercancel', endDrag);
 
@@ -423,7 +433,23 @@
     return false;
   }
 
+  // tell the main process where everything clickable is, so it can make the window interactive the moment the cursor
+  // reaches it (see 'hit-rects' in main.js). Sent only when something moved.
+  let hitKey = '';
+  function sendHitRects() {
+    const rs = [];
+    const add = (el) => { const r = el.getBoundingClientRect(); if (r.width > 1 && r.height > 1) rs.push([Math.round(r.x), Math.round(r.y), Math.round(r.width), Math.round(r.height)]); };
+    if (row.style.visibility !== 'hidden') add(row);
+    if (itemsEl.style.pointerEvents === 'auto' && bar.style.visibility !== 'hidden') add(itemsEl);
+    for (const k in panels) if (panels[k].classList.contains('show')) add(panels[k]);
+    if (S.ctx) { const c = document.getElementById('ctx'); if (c) add(c); }
+    toastsEl.querySelectorAll('.toast').forEach(add);
+    const key = rs.map((r) => r.join(',')).join(';');
+    if (key !== hitKey) { hitKey = key; tb.hitRects(rs); }
+  }
+  tb.on('interactive', (v) => { S.interactive = v; });   // main switched it on ahead of us
   function updateInteractive() {
+    sendHitRects();
     let want = S.dragging;
     if (!want && S.inside) {
       const el = document.elementFromPoint(S.cx, S.cy);

@@ -1,7 +1,7 @@
 {
   "name": "wispy",
   "productName": "wispy",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "private": true,
   "description": "A phone-style home bar that replaces the Windows taskbar: it rises to meet your cursor, opens into a dock, and holds search, quick settings and notifications.",
   "keywords": [
@@ -32,6 +32,7 @@
     "start": "electron .",
     "test": "node scripts/test/check.mjs",
     "test:ui": "node scripts/test/ui.mjs",
+    "test:helper": "node scripts/test/helper-flow.mjs",
     "helper": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-helper.ps1",
     "pack": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/pack.ps1",
     "installer": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/make-installer.ps1",

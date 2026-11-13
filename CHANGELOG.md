@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.0.11
+
+- **The dock opens over the white bar only.** It used to open anywhere along the bottom edge as wide as the dock. Now you have to touch the edge where the white bar is (it leans toward you a little, and the zone follows it).
+- **Clicks on dock icons are not lost.** The icons grow and shift while you press, so the release could land on a different icon and the click vanished. The icon you pressed now gets the click. A click with a bit of wobble no longer turns into a drag (the threshold is 10 px), and the window now switches to clickable as soon as the cursor reaches something, instead of waiting for a round trip, so a click right after arriving no longer falls through to the window below.
+- **Sharper, correct icons.** Icons are made at 256 px (they were 128), small old icons are scaled up smoothly instead of left tiny, and store apps use their real tile icon instead of the 32 px window icon. Two different programs that happen to share a file name no longer merge into one dock icon. Icons that failed to load are retried after half a minute, not on every window change, and icons saved by older versions are rebuilt once.
+- **Repo.** `npm run test:ui` (136 checks) and `npm run test:helper` (the native helper against a real window).
+
 ## v1.0.10
 
 - **Wakes up properly after sleep.** After the PC slept, wispy could stop reacting to the cursor and could not even be closed. The page's animation loop could lose a frame while suspended and never restart. It now restarts itself as soon as anything happens, and when Windows resumes (or you unlock) wispy puts its window back on top, re-applies click-through, re-installs the keyboard and mouse hooks, checks that the page answers, and reloads it if it does not.

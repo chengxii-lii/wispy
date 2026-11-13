@@ -45,6 +45,7 @@ async function open() {
     try { await p.until(ready, 8000); break; } catch (e) { if (attempt >= 2) throw e; await p.send('Page.navigate', { url: URL_ }); }
   }
   await p.eval(`(() => { window.__calls = []; for (const k of ['open','resultAction','dockClick','appAction','windowFocus','windowClose','setConfig','volume','setRadio','wifiConnect','openSettings','power','shellKey','notifyOpen']) { const f = tb[k]; tb[k] = (...a) => { __calls.push([k, ...a.map((x) => x && x.title ? x.title : x)]); return f ? f(...a) : undefined; }; } return 1; })()`);
+  await p.eval(`window.__rects = []; const hr = tb.hitRects; tb.hitRects = (r) => { window.__rects = r; return hr && hr(r); }; 1`);
   await sleep(300);
   return p;
 }
@@ -99,6 +100,66 @@ await group('dock: opening and closing with the real mouse', async (p) => {
   const t1 = Date.now(); await move(p, 460, 697); await p.until('window.__wispy.S.open === true', 2500).catch(() => {});
   const openedIn = Date.now() - t1;
   check('and it reopens straight away', (await S(p, 'open')) === true && openedIn < 700, openedIn + ' ms');
+});
+
+await group('dock: opens only over the white bar', async (p) => {
+  for (const x of [250, 330, 585, 700]) {
+    await move(p, x, 150); await sleep(150);
+    await move(p, x, 697); await sleep(700);
+    check(`touching the bottom edge ${Math.abs(x - 460)} px from the bar does not open it`, (await S(p, 'open')) === false, 'x=' + x);
+    await move(p, x, 150); await sleep(400);
+  }
+  for (const x of [400, 460, 520]) {
+    await move(p, 460, 150); await sleep(500);
+    await move(p, x, 697); await sleep(500);
+    check(`touching it over the bar (x=${x}) opens it`, (await S(p, 'open')) === true);
+  }
+});
+
+await group('dock: the main process is told where the clickable things are', async (p) => {
+  const rects = () => p.eval('window.__rects');
+  const has = (rs, x, y) => rs.some((r) => x >= r[0] && x < r[0] + r[2] && y >= r[1] && y < r[1] + r[3]);
+  check('nothing is clickable while the bar is closed', (await rects()).length === 0, JSON.stringify(await rects()));
+  await edge(p);
+  const [ix, iy] = await centre(p, '#items .item', 2);
+  const [bx, by] = await centre(p, '#search');
+  const rs = await rects();
+  check('with the dock open, the icons and the bar are clickable areas', has(rs, ix, iy) && has(rs, bx, by), JSON.stringify(rs));
+  check('empty space above the dock is not', !has(rs, 460, 120));
+  await searchFor(p, 'a');
+  const [px, py] = await centre(p, '#p-search .res', 1);
+  check('an open search panel is a clickable area', has(await rects(), px, py));
+  await key(p, 'Escape'); await key(p, 'Escape'); await move(p, 460, 120); await sleep(900);
+  check('and it is gone again afterwards', (await rects()).length === 0 || !has(await rects(), px, py), JSON.stringify(await rects()));
+});
+
+await group('dock: clicks are not lost', async (p) => {
+  await edge(p);
+  const list = await p.eval(`window.tb.init().then((i) => i.dock.map((d) => [d.id, d.running]))`);
+  // press, hold while the icons magnify and shift, release with a little wobble: still a click on the pressed icon
+  for (const n of [1, 2, 4]) {
+    const [x, y] = await centre(p, '#items .item', n);
+    await move(p, x - 30, y); await sleep(250);
+    await clearCalls(p);
+    await move(p, x, y); await sleep(60);
+    await down(p, x, y); await sleep(160);
+    await up(p, x + 4, y + 2); await sleep(120);
+    const c = await calls(p);
+    check(`icon ${n}: a slow press with a 4 px wobble still clicks it`, c.some((k) => k[0] === 'dockClick'), JSON.stringify(c));
+    if (!(await S(p, 'open'))) await edge(p);
+  }
+  // a real drag of 30 px is a reorder (pinned) or nothing, never a click
+  const [x, y] = await centre(p, '#items .item', 1);
+  await clearCalls(p);
+  await move(p, x, y); await sleep(100); await down(p, x, y); await sleep(40); await dragTo(p, x + 30, y); await sleep(40); await up(p, x + 30, y); await sleep(200);
+  check('dragging an icon 30 px is not a click', !(await calls(p)).some((k) => k[0] === 'dockClick'), JSON.stringify(await calls(p)));
+  // clicking right after the pointer arrives (no settling time)
+  await move(p, 460, 150); await sleep(500); await clearCalls(p);
+  await move(p, 460, 697); await sleep(450);
+  const single = list.findIndex((d, i) => i >= 2 && !(d[1] > 1));   // an app with one window or none: a click acts at once (several windows open a picker)
+  const [ix, iy] = await centre(p, '#items .item', single);
+  await move(p, ix, iy); await down(p, ix, iy); await sleep(30); await up(p, ix, iy); await sleep(150);
+  check('a click straight after arriving on an icon works', (await calls(p)).some((k) => k[0] === 'dockClick'), JSON.stringify(await calls(p)));
 });
 
 await group('dock: clicking apps', async (p) => {

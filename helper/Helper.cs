@@ -551,8 +551,11 @@ static partial class Program
         return best;
     }
 
+    static readonly Dictionary<uint, string> aumidCache = new Dictionary<uint, string>();
     static string AumidOf(uint pid)
     {
+        string cached;
+        if (aumidCache.TryGetValue(pid, out cached)) return cached;
         string s = "";
         IntPtr h = Native.OpenProcess(0x1000, false, pid);
         if (h != IntPtr.Zero)
@@ -561,11 +564,12 @@ static partial class Program
             {
                 uint len = 256;
                 StringBuilder sb = new StringBuilder(256);
-                if (Native.GetApplicationUserModelId(h, ref len, sb) == 0) s = sb.ToString().ToLowerInvariant();
+                if (Native.GetApplicationUserModelId(h, ref len, sb) == 0) s = sb.ToString();
             }
             catch { }
             Native.CloseHandle(h);
         }
+        aumidCache[pid] = s;
         return s;
     }
 
@@ -650,6 +654,7 @@ static partial class Program
             w["pid"] = (long)pid;
             string home = HomeOf(pid, exe);
             if (home.Length > 0) w["home"] = home;
+            if (aumid.Length == 0 && low.IndexOf("\\windowsapps\\", StringComparison.Ordinal) >= 0) aumid = AumidOf(pid);   // packaged apps: their tile icon comes from the package
             if (aumid.Length > 0) w["aumid"] = aumid;
             w["min"] = Native.IsIconic(h);
             list.Add(w);
@@ -812,6 +817,8 @@ static partial class Program
                     int w = bm.bmWidth, h = Math.Abs(bm.bmHeight);
                     using (Bitmap dst = new Bitmap(w, h, PixelFormat.Format32bppArgb))
                     {
+                        Bitmap result = dst;
+                        Bitmap grown = null;
                         BitmapData bd = dst.LockBits(new Rectangle(0, 0, w, h), ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
                         byte[] row = new byte[w * 4];
                         for (int y = 0; y < h; y++)
@@ -821,9 +828,23 @@ static partial class Program
                             Marshal.Copy(row, 0, new IntPtr(bd.Scan0.ToInt64() + (long)y * bd.Stride), w * 4);
                         }
                         dst.UnlockBits(bd);
+                        if (w < 128 && h < 128)
+                        {
+                            // an old program with only a 32 or 48 px icon: scale it up smoothly once, so it is not blocky at high DPI
+                            grown = new Bitmap(128, 128, PixelFormat.Format32bppArgb);
+                            using (Graphics g = Graphics.FromImage(grown))
+                            {
+                                g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                                g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
+                                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
+                                g.DrawImage(dst, new Rectangle(0, 0, 128, 128));
+                            }
+                            result = grown;
+                        }
                         string dir = Path.GetDirectoryName(outPath);
                         if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
-                        dst.Save(outPath, ImageFormat.Png);
+                        result.Save(outPath, ImageFormat.Png);
+                        if (grown != null) grown.Dispose();
                         ok = true;
                     }
                 }
